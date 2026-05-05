@@ -122,7 +122,6 @@
         <button id="verifyBtn" class="secondary" style="margin-top:16px;">✅ Перевірити вибірку</button>
         <div id="verifyResult" class="result-box" style="margin-top:16px;"></div>
         
-        <!-- Блок сканування штрих-кодів -->
         <div id="scanner-container" style="display: none; margin-top: 16px;">
             <div id="reader" style="width: 100%; border-radius: 16px; overflow: hidden;"></div>
         </div>
@@ -240,7 +239,6 @@
         "4.0":  { E:[20,3,4], F:[32,5,6], G:[50,7,8], H:[80,10,11], J:[125,14,15], K:[200,21,22], L:[315,21,22], M:[500,21,22], N:[800,21,22], P:[1250,21,22], Q:[1250,21,22] }
     };
     
-    // Розширені подвійні таблиці (додано відсутні коди для послабленого та посиленого режимів)
     const DOUBLE_NORMAL = {
         "0":   { H:{n1:50,n2:50,Ac1:0,Re1:2,Ac2:1,Re2:2}, J:{n1:80,n2:80,Ac1:0,Re1:2,Ac2:1,Re2:2}, K:{n1:125,n2:125,Ac1:0,Re1:2,Ac2:1,Re2:2}, L:{n1:200,n2:200,Ac1:0,Re1:2,Ac2:1,Re2:2}, M:{n1:315,n2:315,Ac1:0,Re1:2,Ac2:1,Re2:2} },
         "0.65":{ F:{n1:20,n2:20,Ac1:0,Re1:2,Ac2:1,Re2:2}, G:{n1:32,n2:32,Ac1:0,Re1:2,Ac2:1,Re2:2}, H:{n1:50,n2:50,Ac1:1,Re1:3,Ac2:2,Re2:3}, J:{n1:80,n2:80,Ac1:2,Re1:4,Ac2:3,Re2:4}, K:{n1:125,n2:125,Ac1:3,Re1:5,Ac2:4,Re2:5}, L:{n1:200,n2:200,Ac1:5,Re1:7,Ac2:6,Re2:7} },
@@ -396,11 +394,11 @@
     let currentMode = 'normal';
     let currentSampleData = null, currentHeaders = [], currentPlans = null, currentSeed = null;
     let allDataRows = [], remainingIndices = [], secondSampleGenerated = false;
-    let precomputedSecondIndices = null; // зберігаємо другу вибірку заздалегідь
+    let precomputedSecondIndices = null;
     let modGroups = null, actLogoDataUrl = null;
-    let lastGenerationParams = null; // зберігаємо параметри для відтворення verify
+    let lastGenerationParams = null;
 
-    // Робота з історією
+    // Історія
     function loadHistory() {
         try {
             const stored = localStorage.getItem('iso2859v2_history');
@@ -411,7 +409,7 @@
     function saveHistory() {
         try {
             localStorage.setItem('iso2859v2_history', JSON.stringify(history.slice(-50)));
-        } catch (e) { showToast('Помилка збереження історії (переповнення)'); }
+        } catch (e) { showToast('Помилка збереження історії'); }
     }
     function recalcModeFromHistory() {
         if (history.length === 0) { currentMode = 'normal'; return; }
@@ -533,7 +531,7 @@
 
     function reproduceExactSample(params) {
         if (!params) return null;
-        const { N, aqlMajor, level, mode, planType, seed, headers, allDataRowsSaved, modColIndex } = params;
+        const { N, aqlMajor, level, mode, planType, seed, allDataRowsSaved, modColIndex } = params;
         const plan = getSamplingPlan(N, aqlMajor, level, mode, planType);
         if (!plan) return null;
         const sampleSize = planType === 'single' ? plan.n : plan.n1;
@@ -620,9 +618,8 @@
         }
     }
 
-    // ========== СКАНЕР ==========
+    // Сканер
     let html5QrcodeScanner = null;
-
     async function onScanSuccess(decodedText) {
         const resultDiv = document.getElementById('verifyResult');
         const serialCol = findSerialColumnIndex(currentHeaders);
@@ -637,7 +634,6 @@
             resultDiv.innerHTML = `<div style="color:#ef4444; font-weight:700;">❌ Одиниця не входить у вибірку: ${escapeHtml(decodedText)}</div>` + resultDiv.innerHTML;
         }
     }
-
     document.getElementById('startScannerBtn').addEventListener('click', () => {
         document.getElementById('scanner-container').style.display = 'block';
         document.getElementById('startScannerBtn').classList.add('hidden');
@@ -645,7 +641,6 @@
         html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 });
         html5QrcodeScanner.render(onScanSuccess);
     });
-
     document.getElementById('stopScannerBtn').addEventListener('click', () => {
         if (html5QrcodeScanner) {
             html5QrcodeScanner.clear().then(() => {
@@ -697,7 +692,8 @@
         if (modCol !== -1 && dataRows.length) {
             const groups = {};
             dataRows.forEach((row, i) => {
-                const modVal = (row[modCol] || '').trim() || 'Невідомо';
+                let modVal = (row[modCol] || '').trim();
+                if (modVal === '') modVal = 'Невідомо';
                 if (!groups[modVal]) groups[modVal] = [];
                 groups[modVal].push(i);
             });
@@ -721,12 +717,11 @@
         }
         currentSampleData = firstIndices.map(i => dataRows[i]);
         
-        // Підготовка другої вибірки для подвійного плану одразу (deteministically)
+        // Підготовка другої вибірки для подвійного плану (детерміновано)
         precomputedSecondIndices = null;
         if (planType === 'double') {
             const secondSize = planM.n2;
             const remaining = dataRows.map((_, i) => i).filter(i => !firstIndices.includes(i));
-            // Перемішуємо залишок з тим самим seed + зсув
             const shuffledRemaining = fisherYates([...remaining], currentSeed + 10007);
             precomputedSecondIndices = shuffledRemaining.slice(0, secondSize);
         }
@@ -740,10 +735,9 @@
             modGroups[mod].push(serial);
         });
         
-        // Збереження параметрів для verify
         lastGenerationParams = {
             N, aqlMajor: aqlM, level, mode: currentMode, planType, seed: currentSeed,
-            headers: headers, allDataRowsSaved: dataRows, modColIndex: modCol
+            allDataRowsSaved: dataRows, modColIndex: modCol
         };
         
         let planStr = planType === 'single' ?
@@ -799,23 +793,24 @@
             const dM2 = parseInt(document.getElementById('defectsMajor2').value) || 0;
             const dMi2 = parseInt(document.getElementById('defectsMinor2').value) || 0;
             const totC = dC + dC2, totM = dM + dM2, totMi = dMi + dMi2;
-            // Правила для подвійного плану
+            // Critical
             if (dC >= currentPlans.critical.re1) { isRejected = true; reasons.push(`Критичні (перша вибірка): ${dC} ≥ Re₁=${currentPlans.critical.re1}`); }
             else if (totC >= currentPlans.critical.re2) { isRejected = true; reasons.push(`Критичні (сумарно): ${totC} ≥ Re₂=${currentPlans.critical.re2}`); }
             else if (totC <= currentPlans.critical.ac2) { /* прийнято */ }
-            else { reasons.push(`Критичні (сумарно): ${totC} між Ac₂=${currentPlans.critical.ac2} та Re₂=${currentPlans.critical.re2} – невизначеність, відхилено для безпеки`); isRejected = true; }
-            
+            else { reasons.push(`Критичні (сумарно): ${totC} між Ac₂=${currentPlans.critical.ac2} та Re₂=${currentPlans.critical.re2} – відхилено`); isRejected = true; }
+            // Major
             if (!isRejected) {
                 if (dM >= currentPlans.major.re1) { isRejected = true; reasons.push(`Значні (перша вибірка): ${dM} ≥ Re₁=${currentPlans.major.re1}`); }
                 else if (totM >= currentPlans.major.re2) { isRejected = true; reasons.push(`Значні (сумарно): ${totM} ≥ Re₂=${currentPlans.major.re2}`); }
                 else if (totM <= currentPlans.major.ac2) { /* прийнято */ }
-                else { reasons.push(`Значні (сумарно): ${totM} між Ac₂=${currentPlans.major.ac2} та Re₂=${currentPlans.major.re2} – невизначеність, відхилено`); isRejected = true; }
+                else { reasons.push(`Значні (сумарно): ${totM} між Ac₂=${currentPlans.major.ac2} та Re₂=${currentPlans.major.re2} – відхилено`); isRejected = true; }
             }
+            // Minor
             if (!isRejected) {
                 if (dMi >= currentPlans.minor.re1) { isRejected = true; reasons.push(`Незначні (перша вибірка): ${dMi} ≥ Re₁=${currentPlans.minor.re1}`); }
                 else if (totMi >= currentPlans.minor.re2) { isRejected = true; reasons.push(`Незначні (сумарно): ${totMi} ≥ Re₂=${currentPlans.minor.re2}`); }
                 else if (totMi <= currentPlans.minor.ac2) { /* прийнято */ }
-                else { reasons.push(`Незначні (сумарно): ${totMi} між Ac₂=${currentPlans.minor.ac2} та Re₂=${currentPlans.minor.re2} – невизначеність, відхилено`); isRejected = true; }
+                else { reasons.push(`Незначні (сумарно): ${totMi} між Ac₂=${currentPlans.minor.ac2} та Re₂=${currentPlans.minor.re2} – відхилено`); isRejected = true; }
             }
         }
         const resultDiv = document.getElementById('decisionResult');
@@ -846,7 +841,7 @@
         }
     });
 
-    // Акт відбору (функція buildActHTML без змін)
+    // Акт відбору (виправлена версія з правильними тегами)
     function buildActHTML() {
         const number = document.getElementById('actNumber').value.trim();
         const dateRaw = document.getElementById('actDate').value;
@@ -872,7 +867,7 @@
         if (modGroups && Object.keys(modGroups).length > 0) {
             modTableHtml = `<tr><th>Модифікація</th><th>Заводські номери</th><th style="width:15%;">Кількість</th></tr>`;
             for (let [mod, serials] of Object.entries(modGroups)) {
-                modTableHtml += `<tr><td>${escapeHtml(mod)}</td><td>${escapeHtml(serials.join(', '))}</td><td>${serials.length}</td></tr>`;
+                modTableHtml += `<tr><td>${escapeHtml(mod)}</td><td>${escapeHtml(serials.join(', '))}<td>${serials.length}</td></tr>`;
             }
             modTableHtml = `<table>${modTableHtml}</table>`;
         } else {
@@ -916,11 +911,11 @@
     ${decisionLine}
     <p><strong>Метод відбору згідно процедури ПР-3.10/33-02.3:</strong> використовуючи Додаток А ДСТУ ISO 24153:2014 (з застосуванням стратифікованого випадкового відбору, якщо партія складається з декількох модифікацій/виконань в межах одного затвердженого типу ЗВТ) та таблиці вибіркового контролю згідно з ДСТУ ISO 2859-1:2014<br>Seed: ${currentSeed ?? '—'}</p>
     <table>
-      <tr><th>Назва ЗВТ: </th><td>Лічильник електричної енергії статичний однофазний. </td></tr>
-      <tr><th>Тип ЗВТ: </th><td>${escapeHtml(deviceType)}</td></tr>
-      <tr><th>Версія ПЗ: </th><td>${escapeHtml(modificationField)}</td></tr>
-      <tr><th>Розмір партії (шт.): </th><td>${escapeHtml(lotSize)}</td></tr>
-      <tr><th>Кількість відібраних зразків (шт.): </th><td>${escapeHtml(sampleCount)}</td></tr>
+        <tr><th>Назва ЗВТ: </th><td>Лічильник електричної енергії статичний однофазний.</td></tr>
+        <tr><th>Тип ЗВТ: </th><td>${escapeHtml(deviceType)}</td></tr>
+        <tr><th>Версія ПЗ: </th><td>${escapeHtml(modificationField)}</td></tr>
+        <tr><th>Розмір партії (шт.): </th><td>${escapeHtml(lotSize)}</td></tr>
+        <tr><th>Кількість відібраних зразків (шт.): </th><td>${escapeHtml(sampleCount)}</td></tr>
     </table>
     ${modTableHtml}
     <p>Зразки ідентифіковані, відповідають заявці.</p>
@@ -956,7 +951,11 @@
         doc.save(`inspection_${last.id}.pdf`);
     });
 
-    function fillActDefaults() { document.getElementById('actDate').value = new Date().toISOString().slice(0,10); }
+    function fillActDefaults() { 
+        const today = new Date().toISOString().slice(0,10);
+        document.getElementById('actDate').value = today;
+        document.getElementById('decisionDate').value = today;
+    }
     (function setDefaultSeed() {
         const now = new Date();
         document.getElementById('seed').value = `${String(now.getDate()).padStart(2,'0')}${String(now.getMonth()+1).padStart(2,'0')}${now.getFullYear()}${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}`;
@@ -1031,7 +1030,7 @@
         if (confirm('Очистити всю історію?')) { history = []; saveHistory(); currentMode = 'normal'; updateModeDisplay(); renderHistory(); }
     });
 
-    // PWA
+    // PWA (проста реєстрація)
     function setupPWA() {
         const manifest = {
             name: "ISO 2859-1 PRO Контроль",
