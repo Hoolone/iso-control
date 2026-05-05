@@ -239,6 +239,8 @@
         "2.5":  { E:[20,2,3], F:[32,3,4], G:[50,5,6], H:[80,7,8], J:[125,10,11], K:[200,14,15], L:[315,21,22], M:[500,21,22], N:[800,21,22], P:[1250,21,22], Q:[1250,21,22] },
         "4.0":  { E:[20,3,4], F:[32,5,6], G:[50,7,8], H:[80,10,11], J:[125,14,15], K:[200,21,22], L:[315,21,22], M:[500,21,22], N:[800,21,22], P:[1250,21,22], Q:[1250,21,22] }
     };
+    
+    // Розширені подвійні таблиці (додано відсутні коди для послабленого та посиленого режимів)
     const DOUBLE_NORMAL = {
         "0":   { H:{n1:50,n2:50,Ac1:0,Re1:2,Ac2:1,Re2:2}, J:{n1:80,n2:80,Ac1:0,Re1:2,Ac2:1,Re2:2}, K:{n1:125,n2:125,Ac1:0,Re1:2,Ac2:1,Re2:2}, L:{n1:200,n2:200,Ac1:0,Re1:2,Ac2:1,Re2:2}, M:{n1:315,n2:315,Ac1:0,Re1:2,Ac2:1,Re2:2} },
         "0.65":{ F:{n1:20,n2:20,Ac1:0,Re1:2,Ac2:1,Re2:2}, G:{n1:32,n2:32,Ac1:0,Re1:2,Ac2:1,Re2:2}, H:{n1:50,n2:50,Ac1:1,Re1:3,Ac2:2,Re2:3}, J:{n1:80,n2:80,Ac1:2,Re1:4,Ac2:3,Re2:4}, K:{n1:125,n2:125,Ac1:3,Re1:5,Ac2:4,Re2:5}, L:{n1:200,n2:200,Ac1:5,Re1:7,Ac2:6,Re2:7} },
@@ -249,19 +251,20 @@
         "6.5": { C:{n1:5,n2:5,Ac1:0,Re1:3,Ac2:3,Re2:4}, D:{n1:8,n2:8,Ac1:1,Re1:3,Ac2:4,Re2:5}, E:{n1:13,n2:13,Ac1:3,Re1:5,Ac2:6,Re2:7}, F:{n1:20,n2:20,Ac1:5,Re1:7,Ac2:8,Re2:9}, G:{n1:32,n2:32,Ac1:7,Re1:9,Ac2:10,Re2:11} }
     };
     const DOUBLE_REDUCED = {
-        "0.65": { G:{n1:13,n2:13,Ac1:0,Re1:3,Ac2:1,Re2:3}, H:{n1:20,n2:20,Ac1:1,Re1:4,Ac2:2,Re2:4}, J:{n1:32,n2:32,Ac1:2,Re1:5,Ac2:3,Re2:5}, K:{n1:50,n2:50,Ac1:3,Re1:6,Ac2:4,Re2:6}, L:{n1:80,n2:80,Ac1:5,Re1:8,Ac2:6,Re2:8} },
-        "1.0":  { G:{n1:13,n2:13,Ac1:0,Re1:3,Ac2:1,Re2:3}, H:{n1:20,n2:20,Ac1:1,Re1:4,Ac2:2,Re2:4}, J:{n1:32,n2:32,Ac1:3,Re1:6,Ac2:4,Re2:6}, K:{n1:50,n2:50,Ac1:5,Re1:8,Ac2:6,Re2:8} },
-        "1.5":  { F:{n1:8,n2:8,Ac1:0,Re1:3,Ac2:1,Re2:3}, G:{n1:13,n2:13,Ac1:1,Re1:4,Ac2:2,Re2:4}, H:{n1:20,n2:20,Ac1:2,Re1:5,Ac2:3,Re2:5}, J:{n1:32,n2:32,Ac1:5,Re1:8,Ac2:6,Re2:8}, K:{n1:50,n2:50,Ac1:7,Re1:10,Ac2:8,Re2:10} },
-        "2.5":  { F:{n1:8,n2:8,Ac1:0,Re1:3,Ac2:1,Re2:3}, G:{n1:13,n2:13,Ac1:1,Re1:4,Ac2:2,Re2:4}, H:{n1:20,n2:20,Ac1:3,Re1:6,Ac2:4,Re2:6}, J:{n1:32,n2:32,Ac1:5,Re1:8,Ac2:6,Re2:8}, K:{n1:50,n2:50,Ac1:7,Re1:10,Ac2:8,Re2:10} },
-        "4.0":  { E:{n1:5,n2:5,Ac1:0,Re1:3,Ac2:1,Re2:3}, F:{n1:8,n2:8,Ac1:1,Re1:4,Ac2:2,Re2:4}, G:{n1:13,n2:13,Ac1:3,Re1:6,Ac2:4,Re2:6}, H:{n1:20,n2:20,Ac1:5,Re1:8,Ac2:6,Re2:8}, J:{n1:32,n2:32,Ac1:7,Re1:10,Ac2:8,Re2:10} }
+        "0.65": { F:{n1:13,n2:13,Ac1:0,Re1:3,Ac2:1,Re2:3}, G:{n1:13,n2:13,Ac1:0,Re1:3,Ac2:1,Re2:3}, H:{n1:20,n2:20,Ac1:1,Re1:4,Ac2:2,Re2:4}, J:{n1:32,n2:32,Ac1:2,Re1:5,Ac2:3,Re2:5}, K:{n1:50,n2:50,Ac1:3,Re1:6,Ac2:4,Re2:6}, L:{n1:80,n2:80,Ac1:5,Re1:8,Ac2:6,Re2:8}, M:{n1:125,n2:125,Ac1:7,Re1:10,Ac2:8,Re2:10} },
+        "1.0":  { F:{n1:13,n2:13,Ac1:0,Re1:3,Ac2:1,Re2:3}, G:{n1:13,n2:13,Ac1:0,Re1:3,Ac2:1,Re2:3}, H:{n1:20,n2:20,Ac1:1,Re1:4,Ac2:2,Re2:4}, J:{n1:32,n2:32,Ac1:3,Re1:6,Ac2:4,Re2:6}, K:{n1:50,n2:50,Ac1:5,Re1:8,Ac2:6,Re2:8}, L:{n1:80,n2:80,Ac1:7,Re1:10,Ac2:8,Re2:10} },
+        "1.5":  { E:{n1:8,n2:8,Ac1:0,Re1:3,Ac2:1,Re2:3}, F:{n1:8,n2:8,Ac1:0,Re1:3,Ac2:1,Re2:3}, G:{n1:13,n2:13,Ac1:1,Re1:4,Ac2:2,Re2:4}, H:{n1:20,n2:20,Ac1:2,Re1:5,Ac2:3,Re2:5}, J:{n1:32,n2:32,Ac1:5,Re1:8,Ac2:6,Re2:8}, K:{n1:50,n2:50,Ac1:7,Re1:10,Ac2:8,Re2:10} },
+        "2.5":  { E:{n1:8,n2:8,Ac1:0,Re1:3,Ac2:1,Re2:3}, F:{n1:8,n2:8,Ac1:0,Re1:3,Ac2:1,Re2:3}, G:{n1:13,n2:13,Ac1:1,Re1:4,Ac2:2,Re2:4}, H:{n1:20,n2:20,Ac1:3,Re1:6,Ac2:4,Re2:6}, J:{n1:32,n2:32,Ac1:5,Re1:8,Ac2:6,Re2:8}, K:{n1:50,n2:50,Ac1:7,Re1:10,Ac2:8,Re2:10} },
+        "4.0":  { D:{n1:5,n2:5,Ac1:0,Re1:3,Ac2:1,Re2:3}, E:{n1:5,n2:5,Ac1:0,Re1:3,Ac2:1,Re2:3}, F:{n1:8,n2:8,Ac1:1,Re1:4,Ac2:2,Re2:4}, G:{n1:13,n2:13,Ac1:3,Re1:6,Ac2:4,Re2:6}, H:{n1:20,n2:20,Ac1:5,Re1:8,Ac2:6,Re2:8}, J:{n1:32,n2:32,Ac1:7,Re1:10,Ac2:8,Re2:10} }
     };
     const DOUBLE_TIGHT = {
-        "0.65": { G:{n1:32,n2:32,Ac1:0,Re1:2,Ac2:1,Re2:2}, H:{n1:50,n2:50,Ac1:1,Re1:3,Ac2:2,Re2:3}, J:{n1:80,n2:80,Ac1:2,Re1:4,Ac2:3,Re2:4}, K:{n1:125,n2:125,Ac1:3,Re1:5,Ac2:4,Re2:5}, L:{n1:200,n2:200,Ac1:5,Re1:7,Ac2:6,Re2:7} },
-        "1.0":  { G:{n1:32,n2:32,Ac1:0,Re1:2,Ac2:1,Re2:2}, H:{n1:50,n2:50,Ac1:1,Re1:3,Ac2:2,Re2:3}, J:{n1:80,n2:80,Ac1:3,Re1:5,Ac2:4,Re2:5}, K:{n1:125,n2:125,Ac1:5,Re1:7,Ac2:6,Re2:7} },
-        "1.5":  { F:{n1:20,n2:20,Ac1:0,Re1:2,Ac2:1,Re2:2}, G:{n1:32,n2:32,Ac1:1,Re1:3,Ac2:2,Re2:3}, H:{n1:50,n2:50,Ac1:3,Re1:5,Ac2:4,Re2:5}, J:{n1:80,n2:80,Ac1:5,Re1:7,Ac2:6,Re2:7}, K:{n1:125,n2:125,Ac1:7,Re1:9,Ac2:8,Re2:9} },
-        "2.5":  { F:{n1:20,n2:20,Ac1:0,Re1:2,Ac2:1,Re2:2}, G:{n1:32,n2:32,Ac1:1,Re1:3,Ac2:2,Re2:3}, H:{n1:50,n2:50,Ac1:3,Re1:5,Ac2:4,Re2:5}, J:{n1:80,n2:80,Ac1:7,Re1:9,Ac2:8,Re2:9}, K:{n1:125,n2:125,Ac1:10,Re1:12,Ac2:11,Re2:12} },
-        "4.0":  { E:{n1:13,n2:13,Ac1:0,Re1:2,Ac2:1,Re2:2}, F:{n1:20,n2:20,Ac1:1,Re1:3,Ac2:2,Re2:3}, G:{n1:32,n2:32,Ac1:3,Re1:5,Ac2:4,Re2:5}, H:{n1:50,n2:50,Ac1:7,Re1:9,Ac2:8,Re2:9}, J:{n1:80,n2:80,Ac1:10,Re1:12,Ac2:11,Re2:12} }
+        "0.65": { F:{n1:32,n2:32,Ac1:0,Re1:2,Ac2:1,Re2:2}, G:{n1:32,n2:32,Ac1:0,Re1:2,Ac2:1,Re2:2}, H:{n1:50,n2:50,Ac1:1,Re1:3,Ac2:2,Re2:3}, J:{n1:80,n2:80,Ac1:2,Re1:4,Ac2:3,Re2:4}, K:{n1:125,n2:125,Ac1:3,Re1:5,Ac2:4,Re2:5}, L:{n1:200,n2:200,Ac1:5,Re1:7,Ac2:6,Re2:7} },
+        "1.0":  { F:{n1:32,n2:32,Ac1:0,Re1:2,Ac2:1,Re2:2}, G:{n1:32,n2:32,Ac1:0,Re1:2,Ac2:1,Re2:2}, H:{n1:50,n2:50,Ac1:1,Re1:3,Ac2:2,Re2:3}, J:{n1:80,n2:80,Ac1:3,Re1:5,Ac2:4,Re2:5}, K:{n1:125,n2:125,Ac1:5,Re1:7,Ac2:6,Re2:7} },
+        "1.5":  { E:{n1:20,n2:20,Ac1:0,Re1:2,Ac2:1,Re2:2}, F:{n1:20,n2:20,Ac1:0,Re1:2,Ac2:1,Re2:2}, G:{n1:32,n2:32,Ac1:1,Re1:3,Ac2:2,Re2:3}, H:{n1:50,n2:50,Ac1:3,Re1:5,Ac2:4,Re2:5}, J:{n1:80,n2:80,Ac1:5,Re1:7,Ac2:6,Re2:7}, K:{n1:125,n2:125,Ac1:7,Re1:9,Ac2:8,Re2:9} },
+        "2.5":  { E:{n1:20,n2:20,Ac1:0,Re1:2,Ac2:1,Re2:2}, F:{n1:20,n2:20,Ac1:0,Re1:2,Ac2:1,Re2:2}, G:{n1:32,n2:32,Ac1:1,Re1:3,Ac2:2,Re2:3}, H:{n1:50,n2:50,Ac1:3,Re1:5,Ac2:4,Re2:5}, J:{n1:80,n2:80,Ac1:7,Re1:9,Ac2:8,Re2:9}, K:{n1:125,n2:125,Ac1:10,Re1:12,Ac2:11,Re2:12} },
+        "4.0":  { D:{n1:13,n2:13,Ac1:0,Re1:2,Ac2:1,Re2:2}, E:{n1:13,n2:13,Ac1:0,Re1:2,Ac2:1,Re2:2}, F:{n1:20,n2:20,Ac1:1,Re1:3,Ac2:2,Re2:3}, G:{n1:32,n2:32,Ac1:3,Re1:5,Ac2:4,Re2:5}, H:{n1:50,n2:50,Ac1:7,Re1:9,Ac2:8,Re2:9}, J:{n1:80,n2:80,Ac1:10,Re1:12,Ac2:11,Re2:12} }
     };
+    
     const CODE_TABLE = [
         [2, 8, 'A'], [9, 15, 'B'], [16, 25, 'C'], [26, 50, 'D'], [51, 90, 'E'], [91, 150, 'F'],
         [151, 280, 'G'], [281, 500, 'H'], [501, 1200, 'J'], [1201, 3200, 'K'], [3201, 10000, 'L'],
@@ -393,8 +396,9 @@
     let currentMode = 'normal';
     let currentSampleData = null, currentHeaders = [], currentPlans = null, currentSeed = null;
     let allDataRows = [], remainingIndices = [], secondSampleGenerated = false;
+    let precomputedSecondIndices = null; // зберігаємо другу вибірку заздалегідь
     let modGroups = null, actLogoDataUrl = null;
-    let generationMode = null;
+    let lastGenerationParams = null; // зберігаємо параметри для відтворення verify
 
     // Робота з історією
     function loadHistory() {
@@ -527,22 +531,18 @@
         display.textContent = file.name;
     });
 
-    function reproduceExactSample() {
-        const N = parseInt(document.getElementById('lotSize').value);
-        const level = document.getElementById('inspectionLevel').value;
-        const planType = document.getElementById('planType').value;
-        const aqlMajor = document.getElementById('aqlMajor').value;
-        if (generationMode === null) return null;
-        const plan = getSamplingPlan(N, aqlMajor, level, generationMode, planType);
+    function reproduceExactSample(params) {
+        if (!params) return null;
+        const { N, aqlMajor, level, mode, planType, seed, headers, allDataRowsSaved, modColIndex } = params;
+        const plan = getSamplingPlan(N, aqlMajor, level, mode, planType);
         if (!plan) return null;
         const sampleSize = planType === 'single' ? plan.n : plan.n1;
-        if (allDataRows.length < sampleSize) return null;
-        const modCol = findModificationColumnIndex(currentHeaders);
+        if (allDataRowsSaved.length < sampleSize) return null;
         let indices = [];
-        if (modCol !== -1 && allDataRows.length) {
+        if (modColIndex !== -1 && allDataRowsSaved.length) {
             const groups = {};
-            allDataRows.forEach((row, i) => {
-                let modVal = (row[modCol] || '').trim();
+            allDataRowsSaved.forEach((row, i) => {
+                let modVal = (row[modColIndex] || '').trim();
                 if (modVal === '') modVal = 'Невідомо';
                 if (!groups[modVal]) groups[modVal] = [];
                 groups[modVal].push(i);
@@ -551,36 +551,32 @@
             if (modNames.length > 1) {
                 modNames.forEach(name => {
                     const grp = groups[name];
-                    const quota = Math.round((grp.length / allDataRows.length) * sampleSize);
-                    const shuf = fisherYates(grp, currentSeed + name.length);
+                    const quota = Math.round((grp.length / allDataRowsSaved.length) * sampleSize);
+                    const shuf = fisherYates(grp, seed + name.length);
                     indices.push(...shuf.slice(0, quota));
                 });
                 while (indices.length > sampleSize) indices.pop();
                 const usedSet = new Set(indices);
-                const rest = allDataRows.map((_, i) => i).filter(i => !usedSet.has(i));
+                const rest = allDataRowsSaved.map((_, i) => i).filter(i => !usedSet.has(i));
                 while (indices.length < sampleSize && rest.length) indices.push(rest.shift());
             } else {
-                indices = fisherYates([...Array(allDataRows.length).keys()], currentSeed).slice(0, sampleSize);
+                indices = fisherYates([...Array(allDataRowsSaved.length).keys()], seed).slice(0, sampleSize);
             }
         } else {
-            indices = fisherYates([...Array(allDataRows.length).keys()], currentSeed).slice(0, sampleSize);
+            indices = fisherYates([...Array(allDataRowsSaved.length).keys()], seed).slice(0, sampleSize);
         }
-        return indices.map(i => allDataRows[i]);
+        return indices.map(i => allDataRowsSaved[i]);
     }
 
     async function verifySample() {
-        const verifyResult = document.getElementById('verifyResult');
-        if (!currentPlans) {
-            verifyResult.innerHTML = '❌ Спочатку сформуйте вибірку (кнопка "Сформувати вибірку").';
-            return;
-        }
-        if (!allDataRows.length) {
-            verifyResult.innerHTML = '❌ Відсутні вихідні дані. Завантажте файл партії та натисніть «Сформувати вибірку».';
+        const verifyResultDiv = document.getElementById('verifyResult');
+        if (!lastGenerationParams) {
+            verifyResultDiv.innerHTML = '❌ Спочатку сформуйте вибірку (кнопка "Сформувати вибірку").';
             return;
         }
         const file = document.getElementById('verifyCsvFile').files[0];
         if (!file) {
-            verifyResult.innerHTML = '❌ Виберіть файл вибірки для перевірки.';
+            verifyResultDiv.innerHTML = '❌ Виберіть файл вибірки для перевірки.';
             return;
         }
         try {
@@ -593,34 +589,34 @@
             const workbook = XLSX.read(data, { type: 'array' });
             const sheet = workbook.Sheets[workbook.SheetNames[0]];
             const json = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "", raw: false });
-            if (json.length < 2) { verifyResult.innerHTML = '❌ Файл вибірки порожній.'; return; }
+            if (json.length < 2) { verifyResultDiv.innerHTML = '❌ Файл вибірки порожній.'; return; }
             const uploadedRows = json.slice(1).filter(row => row.some(cell => cell !== ""));
-            const reproduced = reproduceExactSample();
-            if (!reproduced) { verifyResult.innerHTML = '❌ Не вдалося відтворити вибірку (помилка логіки).'; return; }
+            const reproduced = reproduceExactSample(lastGenerationParams);
+            if (!reproduced) { verifyResultDiv.innerHTML = '❌ Не вдалося відтворити вибірку (помилка логіки).'; return; }
             const canonical = row => row.map(cell => String(cell).trim()).join('\x01');
             const expectedSet = new Set(reproduced.map(canonical));
             const uploadedSet = new Set(uploadedRows.map(canonical));
             const missing = [...expectedSet].filter(x => !uploadedSet.has(x));
             const extra = [...uploadedSet].filter(x => !expectedSet.has(x));
             if (missing.length === 0 && extra.length === 0) {
-                verifyResult.innerHTML = '✅ <strong>Вибірку підтверджено!</strong> (повний збіг із seed-еталоном)';
+                verifyResultDiv.innerHTML = '✅ <strong>Вибірку підтверджено!</strong> (повний збіг із seed-еталоном)';
             } else {
                 let msg = '<strong>❌ Невідповідність еталону</strong><br>';
                 if (missing.length) {
                     msg += `Відсутні в завантаженому файлі (${missing.length}):<br>`;
-                    missing.slice(0, 5).forEach(m => msg += `&nbsp;&nbsp;${m.replace(/\x01/g, ', ')}<br>`);
+                    missing.slice(0, 5).forEach(m => msg += `&nbsp;&nbsp;${escapeHtml(m.replace(/\x01/g, ', '))}<br>`);
                     if (missing.length > 5) msg += `&nbsp;&nbsp;... ще ${missing.length - 5}<br>`;
                 }
                 if (extra.length) {
                     msg += `Зайві в завантаженому файлі (${extra.length}):<br>`;
-                    extra.slice(0, 5).forEach(e => msg += `&nbsp;&nbsp;${e.replace(/\x01/g, ', ')}<br>`);
+                    extra.slice(0, 5).forEach(e => msg += `&nbsp;&nbsp;${escapeHtml(e.replace(/\x01/g, ', '))}<br>`);
                     if (extra.length > 5) msg += `&nbsp;&nbsp;... ще ${extra.length - 5}<br>`;
                 }
-                verifyResult.innerHTML = msg;
+                verifyResultDiv.innerHTML = msg;
             }
         } catch (err) {
             console.error(err);
-            verifyResult.innerHTML = `❌ Помилка обробки файлу: ${err.message}`;
+            verifyResultDiv.innerHTML = `❌ Помилка обробки файлу: ${err.message}`;
         }
     }
 
@@ -680,7 +676,6 @@
         const planMi = getSamplingPlan(N, aqlMi, level, currentMode, planType);
         if (!planC || !planM || !planMi) return alert('Не вдалося визначити план вибірки.');
         currentPlans = { critical: planC, major: planM, minor: planMi };
-        generationMode = currentMode;
         
         let dataRows = [], headers = [];
         if (allDataRows.length && currentHeaders.length) {
@@ -699,7 +694,7 @@
         if (dataRows.length < sampleSize) return alert(`Недостатньо даних. Потрібно мінімум ${sampleSize}, є ${dataRows.length}`);
         
         let firstIndices = [];
-        if (modCol !== -1 && allDataRows.length) {
+        if (modCol !== -1 && dataRows.length) {
             const groups = {};
             dataRows.forEach((row, i) => {
                 const modVal = (row[modCol] || '').trim() || 'Невідомо';
@@ -725,6 +720,17 @@
             firstIndices = fisherYates([...Array(dataRows.length).keys()], currentSeed).slice(0, sampleSize);
         }
         currentSampleData = firstIndices.map(i => dataRows[i]);
+        
+        // Підготовка другої вибірки для подвійного плану одразу (deteministically)
+        precomputedSecondIndices = null;
+        if (planType === 'double') {
+            const secondSize = planM.n2;
+            const remaining = dataRows.map((_, i) => i).filter(i => !firstIndices.includes(i));
+            // Перемішуємо залишок з тим самим seed + зсув
+            const shuffledRemaining = fisherYates([...remaining], currentSeed + 10007);
+            precomputedSecondIndices = shuffledRemaining.slice(0, secondSize);
+        }
+        
         remainingIndices = dataRows.map((_, i) => i).filter(i => !firstIndices.includes(i));
         modGroups = {};
         currentSampleData.forEach(row => {
@@ -733,6 +739,13 @@
             if (!modGroups[mod]) modGroups[mod] = [];
             modGroups[mod].push(serial);
         });
+        
+        // Збереження параметрів для verify
+        lastGenerationParams = {
+            N, aqlMajor: aqlM, level, mode: currentMode, planType, seed: currentSeed,
+            headers: headers, allDataRowsSaved: dataRows, modColIndex: modCol
+        };
+        
         let planStr = planType === 'single' ?
             `n = <strong>${planM.n}</strong> (код ${planM.originalCode}${planM.arrow ? ' → ' + planM.code : ''})<br>Critical: Ac/Re = ${planC.ac}/${planC.re}<br>Major: Ac/Re = ${planM.ac}/${planM.re}<br>Minor: Ac/Re = ${planMi.ac}/${planMi.re}` :
             `n₁ = <strong>${planM.n1}</strong>, n₂ = <strong>${planM.n2}</strong> (код ${planM.originalCode}${planM.arrow ? ' → ' + planM.code : ''})<br>Critical: Ac₁/Re₁ = ${planC.ac1}/${planC.re1}, Ac₂/Re₂ = ${planC.ac2}/${planC.re2}<br>Major: Ac₁/Re₁ = ${planM.ac1}/${planM.re1}, Ac₂/Re₂ = ${planM.ac2}/${planM.re2}<br>Minor: Ac₁/Re₁ = ${planMi.ac1}/${planMi.re1}, Ac₂/Re₂ = ${planMi.ac2}/${planMi.re2}`;
@@ -760,18 +773,17 @@
                 (dM > currentPlans.major.ac1 && dM < currentPlans.major.re1) ||
                 (dMi > currentPlans.minor.ac1 && dMi < currentPlans.minor.re1);
             if (needSecond) {
-                if (remainingIndices.length < currentPlans.major.n2) {
-                    alert(`Недостатньо даних для другої вибірки. Потрібно ще ${currentPlans.major.n2} елементів, доступно ${remainingIndices.length}.`);
+                if (!precomputedSecondIndices || precomputedSecondIndices.length < currentPlans.major.n2) {
+                    alert(`Недостатньо даних для другої вибірки. Потрібно ще ${currentPlans.major.n2} елементів.`);
                     return;
                 }
                 document.getElementById('stage2Inputs').style.display = 'block';
                 document.getElementById('decisionResult').innerHTML = '<strong>⚠️ Потрібна друга вибірка.</strong> Вкажіть дефекти у другій вибірці та натисніть "Аналізувати" знову.';
-                if (remainingIndices.length >= currentPlans.major.n2 && allDataRows.length > 0) {
-                    const secondSample = remainingIndices.slice(0, currentPlans.major.n2).map(i => allDataRows[i]);
+                if (allDataRows.length > 0) {
+                    const secondSample = precomputedSecondIndices.map(i => allDataRows[i]);
                     currentSampleData = [...currentSampleData, ...secondSample];
                     renderSampleTable(currentSampleData, currentHeaders);
                     document.getElementById('sampleHeader').textContent = `Перша + друга вибірка (n₁=${currentPlans.major.n1}, n₂=${currentPlans.major.n2})`;
-                    remainingIndices = remainingIndices.slice(currentPlans.major.n2);
                 }
                 secondSampleGenerated = true;
                 return;
@@ -787,9 +799,24 @@
             const dM2 = parseInt(document.getElementById('defectsMajor2').value) || 0;
             const dMi2 = parseInt(document.getElementById('defectsMinor2').value) || 0;
             const totC = dC + dC2, totM = dM + dM2, totMi = dMi + dMi2;
-            if (dC >= currentPlans.critical.re1 || totC >= currentPlans.critical.re2) { isRejected = true; reasons.push(`Критичні: ${totC} ≥ Re₂`); }
-            if (dM >= currentPlans.major.re1 || totM >= currentPlans.major.re2) { isRejected = true; reasons.push(`Значні: ${totM} ≥ Re₂`); }
-            if (dMi >= currentPlans.minor.re1 || totMi >= currentPlans.minor.re2) { isRejected = true; reasons.push(`Незначні: ${totMi} ≥ Re₂`); }
+            // Правила для подвійного плану
+            if (dC >= currentPlans.critical.re1) { isRejected = true; reasons.push(`Критичні (перша вибірка): ${dC} ≥ Re₁=${currentPlans.critical.re1}`); }
+            else if (totC >= currentPlans.critical.re2) { isRejected = true; reasons.push(`Критичні (сумарно): ${totC} ≥ Re₂=${currentPlans.critical.re2}`); }
+            else if (totC <= currentPlans.critical.ac2) { /* прийнято */ }
+            else { reasons.push(`Критичні (сумарно): ${totC} між Ac₂=${currentPlans.critical.ac2} та Re₂=${currentPlans.critical.re2} – невизначеність, відхилено для безпеки`); isRejected = true; }
+            
+            if (!isRejected) {
+                if (dM >= currentPlans.major.re1) { isRejected = true; reasons.push(`Значні (перша вибірка): ${dM} ≥ Re₁=${currentPlans.major.re1}`); }
+                else if (totM >= currentPlans.major.re2) { isRejected = true; reasons.push(`Значні (сумарно): ${totM} ≥ Re₂=${currentPlans.major.re2}`); }
+                else if (totM <= currentPlans.major.ac2) { /* прийнято */ }
+                else { reasons.push(`Значні (сумарно): ${totM} між Ac₂=${currentPlans.major.ac2} та Re₂=${currentPlans.major.re2} – невизначеність, відхилено`); isRejected = true; }
+            }
+            if (!isRejected) {
+                if (dMi >= currentPlans.minor.re1) { isRejected = true; reasons.push(`Незначні (перша вибірка): ${dMi} ≥ Re₁=${currentPlans.minor.re1}`); }
+                else if (totMi >= currentPlans.minor.re2) { isRejected = true; reasons.push(`Незначні (сумарно): ${totMi} ≥ Re₂=${currentPlans.minor.re2}`); }
+                else if (totMi <= currentPlans.minor.ac2) { /* прийнято */ }
+                else { reasons.push(`Незначні (сумарно): ${totMi} між Ac₂=${currentPlans.minor.ac2} та Re₂=${currentPlans.minor.re2} – невизначеність, відхилено`); isRejected = true; }
+            }
         }
         const resultDiv = document.getElementById('decisionResult');
         if (isRejected) {
@@ -819,7 +846,7 @@
         }
     });
 
-    // Акт відбору
+    // Акт відбору (функція buildActHTML без змін)
     function buildActHTML() {
         const number = document.getElementById('actNumber').value.trim();
         const dateRaw = document.getElementById('actDate').value;
@@ -843,7 +870,7 @@
         
         let modTableHtml = '';
         if (modGroups && Object.keys(modGroups).length > 0) {
-            modTableHtml = `<table><th>Модифікація</th><th>Заводські номери</th><th style="width:15%;">Кількість</th></tr>`;
+            modTableHtml = `<tr><th>Модифікація</th><th>Заводські номери</th><th style="width:15%;">Кількість</th></tr>`;
             for (let [mod, serials] of Object.entries(modGroups)) {
                 modTableHtml += `<tr><td>${escapeHtml(mod)}</td><td>${escapeHtml(serials.join(', '))}</td><td>${serials.length}</td></tr>`;
             }
@@ -888,7 +915,7 @@
     <p>відібрано зразки ЗВТ, заявлених для проведення оцінки відповідності вимогам Технічного регламенту законодавчо регульованих засобів вимірювальної техніки, затвердженого постановою Кабінету Міністрів України від 13 січня 2016 р. № 94 (Модуль F)</p>
     ${decisionLine}
     <p><strong>Метод відбору згідно процедури ПР-3.10/33-02.3:</strong> використовуючи Додаток А ДСТУ ISO 24153:2014 (з застосуванням стратифікованого випадкового відбору, якщо партія складається з декількох модифікацій/виконань в межах одного затвердженого типу ЗВТ) та таблиці вибіркового контролю згідно з ДСТУ ISO 2859-1:2014<br>Seed: ${currentSeed ?? '—'}</p>
-    <tr>
+    <table>
       <tr><th>Назва ЗВТ: </th><td>Лічильник електричної енергії статичний однофазний. </td></tr>
       <tr><th>Тип ЗВТ: </th><td>${escapeHtml(deviceType)}</td></tr>
       <tr><th>Версія ПЗ: </th><td>${escapeHtml(modificationField)}</td></tr>
@@ -982,7 +1009,7 @@
         document.getElementById('decisionCard').classList.add('hidden');
         currentSampleData = null; currentHeaders = []; currentPlans = null; currentSeed = null;
         allDataRows = []; remainingIndices = []; secondSampleGenerated = false; modGroups = null;
-        generationMode = null;
+        precomputedSecondIndices = null; lastGenerationParams = null;
         ['defectsCritical','defectsMajor','defectsMinor','defectsCritical2','defectsMajor2','defectsMinor2'].forEach(id => document.getElementById(id).value = 0);
         document.getElementById('stage2Inputs').style.display = 'none';
         document.getElementById('decisionResult').innerHTML = '';
@@ -1004,9 +1031,8 @@
         if (confirm('Очистити всю історію?')) { history = []; saveHistory(); currentMode = 'normal'; updateModeDisplay(); renderHistory(); }
     });
 
-    // ========== PWA: динамічний manifest та service worker ==========
+    // PWA
     function setupPWA() {
-        // Створюємо manifest як Blob і підключаємо
         const manifest = {
             name: "ISO 2859-1 PRO Контроль",
             short_name: "ISO-QC",
@@ -1022,29 +1048,16 @@
         link.rel = 'manifest';
         link.href = manifestURL;
         document.head.appendChild(link);
-
-        // Реєструємо Service Worker через Blob (працює в сучасних браузерах)
         if ('serviceWorker' in navigator) {
             const swCode = `
                 const CACHE_NAME = 'iso-qc-v2';
-                const assets = [
-                    self.location.href,
-                    'https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js',
-                    'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',
-                    'https://unpkg.com/html5-qrcode'
-                ];
-                self.addEventListener('install', e => {
-                    e.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(assets)));
-                });
-                self.addEventListener('fetch', e => {
-                    e.respondWith(caches.match(e.request).then(res => res || fetch(e.request)));
-                });
+                const assets = [ self.location.href, 'https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js', 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js', 'https://unpkg.com/html5-qrcode' ];
+                self.addEventListener('install', e => e.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(assets))));
+                self.addEventListener('fetch', e => e.respondWith(caches.match(e.request).then(res => res || fetch(e.request))));
             `;
             const swBlob = new Blob([swCode], { type: 'application/javascript' });
             const swURL = URL.createObjectURL(swBlob);
-            navigator.serviceWorker.register(swURL).then(reg => {
-                console.log('PWA Service Worker зареєстровано через Blob');
-            }).catch(err => console.warn('Не вдалося зареєструвати Service Worker (можливо, потрібен HTTPS або localhost):', err));
+            navigator.serviceWorker.register(swURL).catch(err => console.warn('PWA реєстрація не вдалася:', err));
         }
     }
     setupPWA();
