@@ -889,11 +889,11 @@
     ${decisionLine}
     <p><strong>Метод відбору згідно процедури ПР-3.10/33-02.3:</strong> використовуючи Додаток А ДСТУ ISO 24153:2014 (з застосуванням стратифікованого випадкового відбору, якщо партія складається з декількох модифікацій/виконань в межах одного затвердженого типу ЗВТ) та таблиці вибіркового контролю згідно з ДСТУ ISO 2859-1:2014<br>Seed: ${currentSeed ?? '—'}</p>
     <tr>
-      <tr><th>Назва ЗВТ</th><td>Лічильник електричної енергії статичний однофазний</td></tr>
-      <tr><th>Тип ЗВТ</th><td>${escapeHtml(deviceType)}</td></tr>
-      <tr><th>Версія ПО</th><td>${escapeHtml(modificationField)}</td></tr>
-      <tr><th>Розмір партії (шт.)</th><td>${escapeHtml(lotSize)}</td></tr>
-      <tr><th>Кількість відібраних зразків (шт.)</th><td>${escapeHtml(sampleCount)}</td></tr>
+      <tr><th>Назва ЗВТ: </th><td>Лічильник електричної енергії статичний однофазний </td></tr>
+      <tr><th>Тип ЗВТ: </th><td>${escapeHtml(deviceType)}</td></tr>
+      <tr><th>Версія ПО: </th><td>${escapeHtml(modificationField)}</td></tr>
+      <tr><th>Розмір партії (шт.): </th><td>${escapeHtml(lotSize)}</td></tr>
+      <tr><th>Кількість відібраних зразків (шт.): </th><td>${escapeHtml(sampleCount)}</td></tr>
     </table>
     ${modTableHtml}
     <p>Зразки ідентифіковані, відповідають заявці.</p>
