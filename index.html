@@ -1,0 +1,1054 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
+    <title>Формування вибірки з партії – ISO 2859-1 PRO</title>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <style>
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; background: #f5f7fb; margin: 0; padding: 16px; color: #1e293b; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .card { background: white; border-radius: 24px; padding: 24px; margin-bottom: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.07); }
+        h1 { font-size: 1.95rem; margin: 0 0 8px; font-weight: 700; }
+        .sub { color: #64748b; font-size: 0.95rem; margin-bottom: 20px; border-left: 4px solid #3b82f6; padding-left: 14px; }
+        label { font-weight: 600; display: block; margin: 18px 0 8px; font-size: 0.95rem; }
+        input, select, button, .fake-file { width: 100%; padding: 14px 16px; font-size: 1.02rem; border-radius: 16px; border: 1px solid #e2e8f0; background: white; }
+        input:focus, select:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 4px rgba(59,130,246,0.15); }
+        button { background: #3b82f6; color: white; font-weight: 600; border: none; cursor: pointer; padding: 15px; margin-top: 10px; border-radius: 16px; font-size: 1.02rem; transition: 0.2s; }
+        button:active { transform: scale(0.97); }
+        button.secondary { background: #f1f5f9; color: #1e293b; }
+        button.danger { background: #ef4444; }
+        button.success { background: #10b981; }
+        .mode-badge { display: inline-block; background: #e0f2fe; color: #0369a1; border-radius: 40px; padding: 8px 20px; font-size: 0.9rem; font-weight: 700; margin-bottom: 16px; }
+        .sample-window { border: 2px solid #e2e8f0; border-radius: 20px; overflow: hidden; margin-top: 16px; background: #fafcff; }
+        .sample-header { background: #f1f5f9; padding: 12px 18px; font-weight: 600; color: #334155; border-bottom: 1px solid #e2e8f0; }
+        .sample-body { max-height: 420px; overflow-y: auto; padding: 10px; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
+        th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid #e2e8f0; }
+        th { background: #f8fafc; font-weight: 600; position: sticky; top: 0; z-index: 10; }
+        .defect-card { background: #f8fafc; border-radius: 20px; padding: 20px; margin: 24px 0 16px 0; }
+        .defect-type { font-weight: 700; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 3px solid; font-size: 1.05rem; }
+        .critical { border-color: #ef4444; color: #b91c1c; }
+        .major { border-color: #f59e0b; color: #b45309; }
+        .minor { border-color: #3b82f6; color: #1e40af; }
+        .result-box { background: #f8fafc; border-radius: 20px; padding: 20px; margin-top: 16px; font-size: 1.05rem; line-height: 1.75; }
+        .note { font-size: 0.85rem; color: #64748b; margin-top: 6px; line-height: 1.5; }
+        .flex-row { display: flex; gap: 12px; flex-wrap: wrap; }
+        .flex-row button { flex: 1; min-width: 140px; }
+        .aql-group { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+        .operator-buttons { display: flex; gap: 12px; margin-top: 24px; justify-content: center; }
+        .operator-buttons button { flex: 1; font-size: 1.1rem; padding: 16px; border-radius: 20px; }
+        .history-table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 14px; }
+        .history-table th, .history-table td { border: 1px solid #e2e8f0; padding: 8px; text-align: center; }
+        .history-table th { background: #f1f5f9; }
+        .stage-indicator { background: #fef3c7; padding: 8px 16px; border-radius: 12px; margin: 12px 0; font-weight: 600; color: #92400e; }
+        .hidden { display: none; }
+        .act-form label { margin-top: 10px; }
+        .act-form input, .act-form textarea { margin-bottom: 8px; }
+        #actLogoPreview img { max-height: 60px; max-width: 200px; border: 1px solid #e2e8f0; border-radius: 8px; padding: 4px; }
+        .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #1e293b; color: white; padding: 12px 24px; border-radius: 30px; font-weight: 600; z-index: 999; animation: fadeInOut 2.5s ease forwards; }
+        @keyframes fadeInOut { 0% { opacity: 0; transform: translateX(-50%) translateY(20px); } 15% { opacity: 1; transform: translateX(-50%) translateY(0); } 75% { opacity: 1; } 100% { opacity: 0; transform: translateX(-50%) translateY(-10px); } }
+        .seed-wrapper { display: flex; gap: 8px; align-items: center; }
+        .seed-wrapper input { flex: 1; }
+        .seed-wrapper button { flex: 0 0 auto; margin-top: 0; width: auto; padding: 14px 24px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="card">
+        <h1>📊 Формування вибірки з партії</h1>
+        <div class="sub">Контроль якості з розподілом дефектів Critical / Major / Minor (ISO 2859-1 PRO)</div>
+        <div id="modeDisplay" class="mode-badge">Режим: нормальний</div>
+        <label>🆔 Ідентифікатор партії</label>
+        <input type="text" id="lotIdentifier" value="25/3/F/41/">
+        <label>📦 Обсяг партії (N)</label>
+        <input type="number" id="lotSize" value="1000" min="2">
+        <label>🎯 AQL за типом дефекту</label>
+        <div class="aql-group">
+            <div><label style="font-size:0.9rem; margin:8px 0 4px;">Critical</label><select id="aqlCritical"><option value="0">0%</option><option value="0.65" selected>0.65%</option></select></div>
+            <div><label style="font-size:0.9rem; margin:8px 0 4px;">Major</label><select id="aqlMajor"><option value="0.65">0.65%</option><option value="1.0" selected>1.0%</option><option value="1.5">1.5%</option><option value="2.5">2.5%</option></select></div>
+            <div><label style="font-size:0.9rem; margin:8px 0 4px;">Minor</label><select id="aqlMinor"><option value="1.5">1.5%</option><option value="2.5" selected>2.5%</option><option value="4.0">4.0%</option></select></div>
+        </div>
+        <div class="flex-row">
+            <div style="flex:1"><label>🔢 Рівень контролю</label><select id="inspectionLevel"><option value="I">I</option><option value="II" selected>II</option><option value="III">III</option></select></div>
+            <div style="flex:1"><label>📐 Тип плану</label><select id="planType"><option value="single">Single</option><option value="double">Double</option></select></div>
+        </div>
+        <label>📂 Файл партії (CSV, XLSX, XLS)</label>
+        <div style="position:relative;">
+            <div class="fake-file" id="fileNameDisplay" style="padding:14px 16px; background:#f8fafc; color:#64748b;">Файл не вибрано</div>
+            <input type="file" id="csvFile" accept=".csv, .xlsx, .xls" style="position:absolute; opacity:0; top:0; left:0; height:100%; cursor:pointer;">
+        </div>
+        <div class="note" id="autoNote">Після вибору файлу обсяг партії визначиться автоматично</div>
+        <label>🌱 Seed</label>
+        <div class="seed-wrapper">
+            <input type="text" id="seed" value="">
+            <button id="copySeedBtn" class="secondary" style="margin-top:0;">📋 Копіювати</button>
+        </div>
+        <div class="flex-row" style="margin-top:20px;">
+            <button id="generateBtn">🎲 Сформувати вибірку</button>
+            <button id="clearFormBtn" class="secondary">🗑 Очистити</button>
+        </div>
+    </div>
+
+    <div id="planCard" class="card hidden">
+        <h3>📋 План контролю</h3>
+        <div id="planDetails" style="font-size:1.05rem; line-height:1.7; margin-bottom:20px;"></div>
+        <h3 style="margin:28px 0 12px 0;">📋 Вибрана вибірка</h3>
+        <div class="sample-window">
+            <div class="sample-header" id="sampleHeader">Попередній перегляд вибірки — прокручуйте вниз</div>
+            <div class="sample-body" id="sampleBody"></div>
+        </div>
+        <div class="flex-row" style="margin-top:24px;">
+            <button id="downloadCsvRandomBtn" class="secondary">CSV (випадковий)</button>
+            <button id="downloadCsvSortedBtn" class="secondary">CSV (відсортований)</button>
+        </div>
+        <div class="flex-row">
+            <button id="downloadExcelRandomBtn" class="secondary">Excel (випадковий)</button>
+            <button id="downloadExcelSortedBtn" class="secondary">Excel (відсортований)</button>
+        </div>
+    </div>
+
+    <div id="verifyCard" class="card hidden">
+        <h3>🔎 Перевірка вибірки (seed‑відтворення)</h3>
+        <p class="note">Завантажте файл вибірки (CSV або Excel) для порівняння з еталоном, який відновлюється за seed.</p>
+        <label>📂 Файл вибірки</label>
+        <div style="position:relative;">
+            <div class="fake-file" id="verifyFileNameDisplay" style="padding:14px 16px; background:#f8fafc; color:#64748b;">Файл не вибрано</div>
+            <input type="file" id="verifyCsvFile" accept=".csv, .xlsx, .xls" style="position:absolute; opacity:0; top:0; left:0; height:100%; cursor:pointer;">
+        </div>
+        <button id="verifyBtn" class="secondary" style="margin-top:16px;">✅ Перевірити вибірку</button>
+        <div id="verifyResult" class="result-box" style="margin-top:16px;"></div>
+        
+        <!-- Блок сканування штрих-кодів -->
+        <div id="scanner-container" style="display: none; margin-top: 16px;">
+            <div id="reader" style="width: 100%; border-radius: 16px; overflow: hidden;"></div>
+        </div>
+        <div class="flex-row" style="margin-top: 16px;">
+            <button id="startScannerBtn" class="secondary">📷 Увімкнути сканер</button>
+            <button id="stopScannerBtn" class="danger hidden">🚫 Вимкнути сканер</button>
+        </div>
+    </div>
+
+    <div id="decisionCard" class="card hidden">
+        <h3>🔍 Результат інспекції</h3>
+        <div id="stage1Inputs">
+            <label>Кількість критичних дефектів (d Critical)</label>
+            <input type="number" id="defectsCritical" value="0" min="0">
+            <label>Кількість значних дефектів (d Major)</label>
+            <input type="number" id="defectsMajor" value="0" min="0">
+            <label>Кількість незначних дефектів (d Minor)</label>
+            <input type="number" id="defectsMinor" value="0" min="0">
+        </div>
+        <div id="stage2Inputs" style="display: none;">
+            <div class="stage-indicator">⚠️ Потрібна друга вибірка — вкажіть дефекти у другій вибірці</div>
+            <label>Друга вибірка — Критичні дефекти</label>
+            <input type="number" id="defectsCritical2" value="0" min="0">
+            <label>Друга вибірка — Значні дефекти</label>
+            <input type="number" id="defectsMajor2" value="0" min="0">
+            <label>Друга вибірка — Незначні дефекти</label>
+            <input type="number" id="defectsMinor2" value="0" min="0">
+        </div>
+        <button id="analyzeBtn">🔍 Аналізувати дефекти</button>
+        <div id="decisionResult" class="result-box"></div>
+
+        <h3 style="margin:32px 0 16px 0;">📝 Типові невідповідності для лічильників електроенергії</h3>
+        <div class="defect-card"><div class="defect-type critical">Критичні дефекти (Critical)</div><ul style="margin: 8px 0 0 20px; padding:0; line-height:1.8;"><li>Електричний пробій, ризик ураження струмом або пожежі</li><li>Повна несправність лічильника (не рахує зовсім)</li><li>Порушення ізоляції, неправильне заземлення</li><li>Невідповідність схеми підключення, що несе загрозу безпеці</li></ul></div>
+        <div class="defect-card"><div class="defect-type major">Значні дефекти (Major)</div><ul style="margin: 8px 0 0 20px; padding:0; line-height:1.8;"><li>Порушення класу точності (перевищення допустимих похибок)</li><li>Збій комунікації (для smart-лічильників)</li><li>Несправність дисплея, індикації або внутрішнього годинника</li><li>Порушення герметичності корпусу, пошкодження пломб</li></ul></div>
+        <div class="defect-card"><div class="defect-type minor">Незначні дефекти (Minor)</div><ul style="margin: 8px 0 0 20px; padding:0; line-height:1.8;"><li>Дрібні подряпини, потертості або дефекти корпусу</li><li>Невеликі недоліки маркування, наклейок або штрих-коду</li><li>Косметичні дефекти, що не впливають на роботу приладу</li></ul></div>
+    </div>
+
+    <div id="historyCard" class="card">
+        <h3>📜 Журнал аудиту (останні 10 записів)</h3>
+        <div id="historyList">Історія порожня</div>
+        <button id="clearHistoryBtn" class="danger" style="margin-top:16px;">🗑 Очистити історію</button>
+    </div>
+
+    <div class="card" id="actParamsCard">
+        <h3>📝 Параметри акту відбору</h3>
+        <div class="act-form">
+            <label>Логотип</label>
+            <input type="file" id="actLogo" accept="image/*">
+            <div id="actLogoPreview" style="margin-top:8px;"></div>
+            <label>Номер акта</label>
+            <input type="text" id="actNumber" value="25/3/F/41/">
+            <label>Дата акта</label>
+            <input type="date" id="actDate">
+            <label>Рішення від (дата)</label>
+            <input type="date" id="decisionDate">
+            <label>Рішення №</label>
+            <input type="text" id="decisionNumber" placeholder="номер рішення">
+            <label>Назва підприємства</label>
+            <input type="text" id="actCompany" value="ТОВ «ПАУЕРГАЗ»">
+            <label>Адреса підприємства</label>
+            <input type="text" id="actAddress" value="вул. Сім'ї Шовкоплясів, 6-А, м. Київ, 04209">
+            <label>ПІБ представника ООВ</label>
+            <input type="text" id="actInspector" value="Горощенко О.О.">
+            <label>Посада представника ООВ</label>
+            <input type="text" id="actInspectorPos" value="молодшим науковим співробітником">
+            <label>ПІБ представника заявника</label>
+            <input type="text" id="actApplicant" value="Коломійця А.О.">
+            <label>Посада представника заявника</label>
+            <input type="text" id="actApplicantPos" value="фахівця зі стандартизації, сертифікації та якості">
+            <label>ПІБ підписанта ООВ (якщо відрізняється)</label>
+            <input type="text" id="signatoryOov" value="Горощенко О.О." placeholder="Прізвище та ініціали">
+            <label>ПІБ підписанта заявника (якщо відрізняється)</label>
+            <input type="text" id="signatoryApplicant" value="Коломієць А.О." placeholder="Прізвище та ініціали">
+            <label>Тип ЗВТ</label>
+            <input type="text" id="actDeviceType" value="EDE1000 smart">
+            <label>Модифікація / Версія ПЗ</label>
+            <input type="text" id="actModification" value="Версія ПЗ: E30-110-v.1.01.0008">
+            <label>Місце випробувань</label>
+            <input type="text" id="actTestLocation" value="ТОВ «ПАУЕРГАЗ», вул. Сім'ї Шовкоплясів, 6-А, м. Київ, 04209">
+        </div>
+        <button id="generateActBtn" class="secondary" style="margin-top:16px;">📄 Акт відбору зразків</button>
+    </div>
+
+    <div class="card" id="reportsCard">
+        <h3>📑 Звіти</h3>
+        <button id="pdfBtn" class="secondary">📑 PDF-звіт</button>
+        <p class="note">Для формування акта використовуйте кнопку в картці «Параметри акту відбору» вище.</p>
+    </div>
+</div>
+
+<script>
+(function(){
+    // ========== ТАБЛИЦІ ISO 2859-1 ==========
+    const SINGLE_NORMAL = {
+        "0":   { E:[13,0,1], F:[20,0,1], G:[32,0,1], H:[50,0,1], J:[80,0,1], K:[125,0,1], L:[200,0,1], M:[315,0,1], N:[500,0,1], P:[800,0,1], Q:[1250,0,1] },
+        "0.65":{ E:[13,0,1], F:[20,0,1], G:[32,1,2], H:[50,2,3], J:[80,3,4], K:[125,5,6], L:[200,7,8], M:[315,10,11], N:[500,14,15], P:[800,21,22], Q:[1250,21,22] },
+        "1.0": { E:[13,1,2], F:[20,1,2], G:[32,2,3], H:[50,3,4], J:[80,5,6], K:[125,7,8], L:[200,10,11], M:[315,14,15], N:[500,21,22], P:[800,21,22], Q:[1250,21,22] },
+        "1.5": { E:[13,1,2], F:[20,2,3], G:[32,3,4], H:[50,5,6], J:[80,7,8], K:[125,10,11], L:[200,14,15], M:[315,21,22], N:[500,21,22], P:[800,21,22], Q:[1250,21,22] },
+        "2.5": { E:[13,2,3], F:[20,3,4], G:[32,5,6], H:[50,7,8], J:[80,10,11], K:[125,14,15], L:[200,21,22], M:[315,21,22], N:[500,21,22], P:[800,21,22], Q:[1250,21,22] },
+        "4.0": { E:[13,3,4], F:[20,5,6], G:[32,7,8], H:[50,10,11], J:[80,14,15], K:[125,21,22], L:[200,21,22], M:[315,21,22], N:[500,21,22], P:[800,21,22], Q:[1250,21,22] },
+        "6.5": { D:[8,0,1], E:[13,5,6], F:[20,7,8], G:[32,10,11], H:[50,14,15], J:[80,21,22], K:[125,21,22], L:[200,21,22], M:[315,21,22], N:[500,21,22], P:[800,21,22], Q:[1250,21,22] }
+    };
+    const SINGLE_REDUCED = {
+        "0.65": { E:[5,0,1], F:[5,0,1], G:[13,0,1], H:[20,1,2], J:[32,1,2], K:[50,3,4], L:[80,5,6], M:[125,7,8], N:[200,10,11], P:[315,14,15], Q:[500,21,22] },
+        "1.0":  { E:[5,0,1], F:[5,1,2], G:[13,1,2], H:[20,1,2], J:[32,3,4], K:[50,5,6], L:[80,7,8], M:[125,10,11], N:[200,14,15], P:[315,14,15], Q:[500,21,22] },
+        "1.5":  { E:[5,0,1], F:[5,1,2], G:[13,1,2], H:[20,2,3], J:[32,5,6], K:[50,7,8], L:[80,10,11], M:[125,14,15], N:[200,14,15], P:[315,21,22], Q:[500,21,22] },
+        "2.5":  { E:[5,1,2], F:[5,1,2], G:[13,2,3], H:[20,3,4], J:[32,5,6], K:[50,7,8], L:[80,10,11], M:[125,14,15], N:[200,21,22], P:[315,21,22], Q:[500,21,22] },
+        "4.0":  { E:[5,1,2], F:[5,2,3], G:[13,3,4], H:[20,5,6], J:[32,7,8], K:[50,10,11], L:[80,14,15], M:[125,21,22], N:[200,21,22], P:[315,21,22], Q:[500,21,22] }
+    };
+    const SINGLE_TIGHT = {
+        "0.65": { E:[20,0,1], F:[32,0,1], G:[50,1,2], H:[80,2,3], J:[125,3,4], K:[200,5,6], L:[315,7,8], M:[500,10,11], N:[800,14,15], P:[1250,21,22], Q:[1250,21,22] },
+        "1.0":  { E:[20,0,1], F:[32,1,2], G:[50,2,3], H:[80,3,4], J:[125,5,6], K:[200,7,8], L:[315,10,11], M:[500,14,15], N:[800,21,22], P:[1250,21,22], Q:[1250,21,22] },
+        "1.5":  { E:[20,1,2], F:[32,2,3], G:[50,3,4], H:[80,5,6], J:[125,7,8], K:[200,10,11], L:[315,14,15], M:[500,21,22], N:[800,21,22], P:[1250,21,22], Q:[1250,21,22] },
+        "2.5":  { E:[20,2,3], F:[32,3,4], G:[50,5,6], H:[80,7,8], J:[125,10,11], K:[200,14,15], L:[315,21,22], M:[500,21,22], N:[800,21,22], P:[1250,21,22], Q:[1250,21,22] },
+        "4.0":  { E:[20,3,4], F:[32,5,6], G:[50,7,8], H:[80,10,11], J:[125,14,15], K:[200,21,22], L:[315,21,22], M:[500,21,22], N:[800,21,22], P:[1250,21,22], Q:[1250,21,22] }
+    };
+    const DOUBLE_NORMAL = {
+        "0":   { H:{n1:50,n2:50,Ac1:0,Re1:2,Ac2:1,Re2:2}, J:{n1:80,n2:80,Ac1:0,Re1:2,Ac2:1,Re2:2}, K:{n1:125,n2:125,Ac1:0,Re1:2,Ac2:1,Re2:2}, L:{n1:200,n2:200,Ac1:0,Re1:2,Ac2:1,Re2:2}, M:{n1:315,n2:315,Ac1:0,Re1:2,Ac2:1,Re2:2} },
+        "0.65":{ F:{n1:20,n2:20,Ac1:0,Re1:2,Ac2:1,Re2:2}, G:{n1:32,n2:32,Ac1:0,Re1:2,Ac2:1,Re2:2}, H:{n1:50,n2:50,Ac1:1,Re1:3,Ac2:2,Re2:3}, J:{n1:80,n2:80,Ac1:2,Re1:4,Ac2:3,Re2:4}, K:{n1:125,n2:125,Ac1:3,Re1:5,Ac2:4,Re2:5}, L:{n1:200,n2:200,Ac1:5,Re1:7,Ac2:6,Re2:7} },
+        "1.0": { E:{n1:13,n2:13,Ac1:0,Re1:2,Ac2:1,Re2:2}, F:{n1:20,n2:20,Ac1:1,Re1:3,Ac2:2,Re2:3}, G:{n1:32,n2:32,Ac1:2,Re1:4,Ac2:3,Re2:4}, H:{n1:50,n2:50,Ac1:3,Re1:5,Ac2:4,Re2:5}, J:{n1:80,n2:80,Ac1:5,Re1:7,Ac2:6,Re2:7}, K:{n1:125,n2:125,Ac1:7,Re1:9,Ac2:8,Re2:9} },
+        "1.5": { E:{n1:13,n2:13,Ac1:0,Re1:3,Ac2:3,Re2:4}, F:{n1:20,n2:20,Ac1:1,Re1:3,Ac2:3,Re2:4}, G:{n1:32,n2:32,Ac1:3,Re1:5,Ac2:4,Re2:5}, H:{n1:50,n2:50,Ac1:5,Re1:7,Ac2:6,Re2:7}, J:{n1:80,n2:80,Ac1:7,Re1:9,Ac2:8,Re2:9}, K:{n1:125,n2:125,Ac1:10,Re1:12,Ac2:11,Re2:12} },
+        "2.5": { D:{n1:8,n2:8,Ac1:0,Re1:3,Ac2:3,Re2:4}, E:{n1:13,n2:13,Ac1:1,Re1:3,Ac2:4,Re2:5}, F:{n1:20,n2:20,Ac1:3,Re1:5,Ac2:4,Re2:5}, G:{n1:32,n2:32,Ac1:5,Re1:7,Ac2:6,Re2:7}, H:{n1:50,n2:50,Ac1:7,Re1:9,Ac2:8,Re2:9}, J:{n1:80,n2:80,Ac1:10,Re1:12,Ac2:11,Re2:12} },
+        "4.0": { C:{n1:5,n2:5,Ac1:0,Re1:3,Ac2:3,Re2:4}, D:{n1:8,n2:8,Ac1:0,Re1:3,Ac2:3,Re2:4}, E:{n1:13,n2:13,Ac1:2,Re1:4,Ac2:3,Re2:4}, F:{n1:20,n2:20,Ac1:4,Re1:6,Ac2:5,Re2:6}, G:{n1:32,n2:32,Ac1:6,Re1:8,Ac2:7,Re2:8}, H:{n1:50,n2:50,Ac1:10,Re1:12,Ac2:11,Re2:12} },
+        "6.5": { C:{n1:5,n2:5,Ac1:0,Re1:3,Ac2:3,Re2:4}, D:{n1:8,n2:8,Ac1:1,Re1:3,Ac2:4,Re2:5}, E:{n1:13,n2:13,Ac1:3,Re1:5,Ac2:6,Re2:7}, F:{n1:20,n2:20,Ac1:5,Re1:7,Ac2:8,Re2:9}, G:{n1:32,n2:32,Ac1:7,Re1:9,Ac2:10,Re2:11} }
+    };
+    const DOUBLE_REDUCED = {
+        "0.65": { G:{n1:13,n2:13,Ac1:0,Re1:3,Ac2:1,Re2:3}, H:{n1:20,n2:20,Ac1:1,Re1:4,Ac2:2,Re2:4}, J:{n1:32,n2:32,Ac1:2,Re1:5,Ac2:3,Re2:5}, K:{n1:50,n2:50,Ac1:3,Re1:6,Ac2:4,Re2:6}, L:{n1:80,n2:80,Ac1:5,Re1:8,Ac2:6,Re2:8} },
+        "1.0":  { G:{n1:13,n2:13,Ac1:0,Re1:3,Ac2:1,Re2:3}, H:{n1:20,n2:20,Ac1:1,Re1:4,Ac2:2,Re2:4}, J:{n1:32,n2:32,Ac1:3,Re1:6,Ac2:4,Re2:6}, K:{n1:50,n2:50,Ac1:5,Re1:8,Ac2:6,Re2:8} },
+        "1.5":  { F:{n1:8,n2:8,Ac1:0,Re1:3,Ac2:1,Re2:3}, G:{n1:13,n2:13,Ac1:1,Re1:4,Ac2:2,Re2:4}, H:{n1:20,n2:20,Ac1:2,Re1:5,Ac2:3,Re2:5}, J:{n1:32,n2:32,Ac1:5,Re1:8,Ac2:6,Re2:8}, K:{n1:50,n2:50,Ac1:7,Re1:10,Ac2:8,Re2:10} },
+        "2.5":  { F:{n1:8,n2:8,Ac1:0,Re1:3,Ac2:1,Re2:3}, G:{n1:13,n2:13,Ac1:1,Re1:4,Ac2:2,Re2:4}, H:{n1:20,n2:20,Ac1:3,Re1:6,Ac2:4,Re2:6}, J:{n1:32,n2:32,Ac1:5,Re1:8,Ac2:6,Re2:8}, K:{n1:50,n2:50,Ac1:7,Re1:10,Ac2:8,Re2:10} },
+        "4.0":  { E:{n1:5,n2:5,Ac1:0,Re1:3,Ac2:1,Re2:3}, F:{n1:8,n2:8,Ac1:1,Re1:4,Ac2:2,Re2:4}, G:{n1:13,n2:13,Ac1:3,Re1:6,Ac2:4,Re2:6}, H:{n1:20,n2:20,Ac1:5,Re1:8,Ac2:6,Re2:8}, J:{n1:32,n2:32,Ac1:7,Re1:10,Ac2:8,Re2:10} }
+    };
+    const DOUBLE_TIGHT = {
+        "0.65": { G:{n1:32,n2:32,Ac1:0,Re1:2,Ac2:1,Re2:2}, H:{n1:50,n2:50,Ac1:1,Re1:3,Ac2:2,Re2:3}, J:{n1:80,n2:80,Ac1:2,Re1:4,Ac2:3,Re2:4}, K:{n1:125,n2:125,Ac1:3,Re1:5,Ac2:4,Re2:5}, L:{n1:200,n2:200,Ac1:5,Re1:7,Ac2:6,Re2:7} },
+        "1.0":  { G:{n1:32,n2:32,Ac1:0,Re1:2,Ac2:1,Re2:2}, H:{n1:50,n2:50,Ac1:1,Re1:3,Ac2:2,Re2:3}, J:{n1:80,n2:80,Ac1:3,Re1:5,Ac2:4,Re2:5}, K:{n1:125,n2:125,Ac1:5,Re1:7,Ac2:6,Re2:7} },
+        "1.5":  { F:{n1:20,n2:20,Ac1:0,Re1:2,Ac2:1,Re2:2}, G:{n1:32,n2:32,Ac1:1,Re1:3,Ac2:2,Re2:3}, H:{n1:50,n2:50,Ac1:3,Re1:5,Ac2:4,Re2:5}, J:{n1:80,n2:80,Ac1:5,Re1:7,Ac2:6,Re2:7}, K:{n1:125,n2:125,Ac1:7,Re1:9,Ac2:8,Re2:9} },
+        "2.5":  { F:{n1:20,n2:20,Ac1:0,Re1:2,Ac2:1,Re2:2}, G:{n1:32,n2:32,Ac1:1,Re1:3,Ac2:2,Re2:3}, H:{n1:50,n2:50,Ac1:3,Re1:5,Ac2:4,Re2:5}, J:{n1:80,n2:80,Ac1:7,Re1:9,Ac2:8,Re2:9}, K:{n1:125,n2:125,Ac1:10,Re1:12,Ac2:11,Re2:12} },
+        "4.0":  { E:{n1:13,n2:13,Ac1:0,Re1:2,Ac2:1,Re2:2}, F:{n1:20,n2:20,Ac1:1,Re1:3,Ac2:2,Re2:3}, G:{n1:32,n2:32,Ac1:3,Re1:5,Ac2:4,Re2:5}, H:{n1:50,n2:50,Ac1:7,Re1:9,Ac2:8,Re2:9}, J:{n1:80,n2:80,Ac1:10,Re1:12,Ac2:11,Re2:12} }
+    };
+    const CODE_TABLE = [
+        [2, 8, 'A'], [9, 15, 'B'], [16, 25, 'C'], [26, 50, 'D'], [51, 90, 'E'], [91, 150, 'F'],
+        [151, 280, 'G'], [281, 500, 'H'], [501, 1200, 'J'], [1201, 3200, 'K'], [3201, 10000, 'L'],
+        [10001, 35000, 'M'], [35001, 150000, 'N'], [150001, 500000, 'P'], [500001, Infinity, 'Q']
+    ];
+    const CODE_ORDER = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'J', 'K', 'L', 'M', 'N', 'P', 'Q'];
+    const LEVEL_SHIFT = { I: -1, II: 0, III: 1 };
+
+    // ========== ДОПОМІЖНІ ФУНКЦІЇ ==========
+    function escapeHtml(str) {
+        if (str === undefined || str === null) return '';
+        return String(str).replace(/[&<>]/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        });
+    }
+    function showToast(msg) {
+        const t = document.createElement('div');
+        t.className = 'toast';
+        t.textContent = msg;
+        document.body.appendChild(t);
+        setTimeout(() => t.remove(), 2500);
+    }
+    function renderSampleTable(rows, headers) {
+        const container = document.getElementById('sampleBody');
+        container.innerHTML = '';
+        const table = document.createElement('table');
+        const thead = document.createElement('thead');
+        const headerRow = document.createElement('tr');
+        headers.forEach(h => {
+            const th = document.createElement('th');
+            th.textContent = h;
+            headerRow.appendChild(th);
+        });
+        thead.appendChild(headerRow);
+        table.appendChild(thead);
+        const tbody = document.createElement('tbody');
+        rows.forEach(row => {
+            const tr = document.createElement('tr');
+            row.forEach(cell => {
+                const td = document.createElement('td');
+                td.textContent = escapeHtml(cell);
+                tr.appendChild(td);
+            });
+            tbody.appendChild(tr);
+        });
+        table.appendChild(tbody);
+        container.appendChild(table);
+    }
+    function getCodeLetter(N, level = 'II') {
+        let base = 'Q';
+        for (let [low, high, code] of CODE_TABLE) if (N >= low && N <= high) { base = code; break; }
+        let idx = CODE_ORDER.indexOf(base) + LEVEL_SHIFT[level];
+        return CODE_ORDER[Math.max(0, Math.min(idx, CODE_ORDER.length - 1))];
+    }
+    function findPlanInTable(table, desiredCode) {
+        if (table[desiredCode]) return { code: desiredCode, plan: table[desiredCode], arrow: false };
+        let idx = CODE_ORDER.indexOf(desiredCode);
+        for (let i = idx; i < CODE_ORDER.length; i++) if (table[CODE_ORDER[i]]) return { code: CODE_ORDER[i], plan: table[CODE_ORDER[i]], arrow: true };
+        for (let i = idx - 1; i >= 0; i--) if (table[CODE_ORDER[i]]) return { code: CODE_ORDER[i], plan: table[CODE_ORDER[i]], arrow: true };
+        return null;
+    }
+    function getSamplingPlan(N, AQL, level = 'II', mode = 'normal', planType = 'single') {
+        const code = getCodeLetter(N, level);
+        if (planType === 'single') {
+            const table = mode === 'normal' ? SINGLE_NORMAL : mode === 'tightened' ? SINGLE_TIGHT : SINGLE_REDUCED;
+            const found = findPlanInTable(table[AQL] || {}, code);
+            if (!found) return null;
+            const [n, ac, re] = found.plan;
+            return { type: 'single', code: found.code, originalCode: code, arrow: found.arrow, n, ac, re, aql: AQL };
+        } else {
+            const doubleTable = mode === 'normal' ? DOUBLE_NORMAL : mode === 'tightened' ? DOUBLE_TIGHT : DOUBLE_REDUCED;
+            const doubleFound = findPlanInTable(doubleTable[AQL] || {}, code);
+            if (doubleFound) {
+                const p = doubleFound.plan;
+                return { type: 'double', code: doubleFound.code, originalCode: code, arrow: doubleFound.arrow, n1: p.n1, n2: p.n2, ac1: p.Ac1, re1: p.Re1, ac2: p.Ac2, re2: p.Re2, aql: AQL };
+            }
+            const singleTable = mode === 'normal' ? SINGLE_NORMAL : mode === 'tightened' ? SINGLE_TIGHT : SINGLE_REDUCED;
+            const singleFound = findPlanInTable(singleTable[AQL] || {}, code);
+            if (singleFound) {
+                const [n, ac, re] = singleFound.plan;
+                return { type: 'single', code: singleFound.code, originalCode: code, arrow: singleFound.arrow, n, ac, re, aql: AQL, _fallback: true };
+            }
+            return null;
+        }
+    }
+    function seededRandom(seed) { let s = seed % 2147483647; if (s <= 0) s += 2147483646; return () => { s = (s * 16807) % 2147483647; return (s - 1) / 2147483646; }; }
+    function fisherYates(arr, seed) { const rng = seededRandom(seed); let a = [...arr]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(rng() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+    function csvEscape(cell) { const s = String(cell); return (s.includes(',') || s.includes('"') || s.includes('\n')) ? `"${s.replace(/"/g, '""')}"` : s; }
+    function findSerialColumnIndex(headers) {
+        const keywords = ['серій', 'serial', 'заводський', 'номер', 's/n'];
+        for (let i = 0; i < headers.length; i++) if (keywords.some(kw => headers[i].toLowerCase().includes(kw))) return i;
+        return 1;
+    }
+    function findModificationColumnIndex(headers) {
+        const keywords = ['модиф', 'виконання', 'модифікація', 'версія', 'mod', 'струм'];
+        for (let i = 0; i < headers.length; i++) if (keywords.some(kw => headers[i].toLowerCase().includes(kw))) return i;
+        return -1;
+    }
+    function getFileName(suffix) {
+        const id = document.getElementById('lotIdentifier').value.trim() || 'Lot';
+        const prefix = id.replace(/[^a-zA-Z0-9а-яА-ЯіІїЇєЄ_\- ]/g, '_').substring(0, 50);
+        const N = document.getElementById('lotSize').value;
+        const n = currentPlans ? (currentPlans.major.n || currentPlans.major.n1) : 'n';
+        return `${prefix}_N${N}_n${n}_seed${currentSeed}${suffix}`;
+    }
+    function downloadBlob(content, filename, mime) {
+        const blob = new Blob([content], { type: mime });
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = filename; a.click(); URL.revokeObjectURL(a.href);
+    }
+    function exportToCSV(sorted) {
+        if (!currentSampleData) return;
+        const dataToExport = sorted ? [...currentSampleData].sort((a, b) => String(a[0]).localeCompare(String(b[0]))) : currentSampleData;
+        const csv = currentHeaders.join(',') + '\n' + dataToExport.map(r => r.map(csvEscape).join(',')).join('\n');
+        downloadBlob(csv, getFileName(sorted ? '_sorted.csv' : '_random.csv'), 'text/csv');
+    }
+    function exportToExcel(sorted) {
+        if (!currentSampleData) return;
+        const dataToExport = sorted ? [...currentSampleData].sort((a, b) => String(a[0]).localeCompare(String(b[0]))) : currentSampleData;
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([currentHeaders, ...dataToExport]), "Вибірка");
+        XLSX.writeFile(wb, getFileName(sorted ? '_sorted.xlsx' : '_random.xlsx'));
+    }
+
+    // Глобальні змінні стану
+    let history = [];
+    let currentMode = 'normal';
+    let currentSampleData = null, currentHeaders = [], currentPlans = null, currentSeed = null;
+    let allDataRows = [], remainingIndices = [], secondSampleGenerated = false;
+    let modGroups = null, actLogoDataUrl = null;
+    let generationMode = null;
+
+    // Робота з історією
+    function loadHistory() {
+        try {
+            const stored = localStorage.getItem('iso2859v2_history');
+            if (stored) history = JSON.parse(stored);
+        } catch (e) { console.warn('Не вдалося завантажити історію'); }
+        recalcModeFromHistory();
+    }
+    function saveHistory() {
+        try {
+            localStorage.setItem('iso2859v2_history', JSON.stringify(history.slice(-50)));
+        } catch (e) { showToast('Помилка збереження історії (переповнення)'); }
+    }
+    function recalcModeFromHistory() {
+        if (history.length === 0) { currentMode = 'normal'; return; }
+        const decisions = history.map(e => e.decision);
+        if (currentMode === 'normal' || currentMode === 'reduced') {
+            const last5 = decisions.slice(-5);
+            if (last5.filter(d => d === 'rejected').length >= 2) { currentMode = 'tightened'; return; }
+        }
+        if (currentMode === 'normal' && history.length >= 10 && decisions.slice(-10).every(d => d === 'accepted')) {
+            currentMode = 'reduced'; return;
+        }
+        if (currentMode === 'tightened' && decisions.slice(-5).length === 5 && decisions.slice(-5).every(d => d === 'accepted')) {
+            currentMode = 'normal'; return;
+        }
+        if (currentMode === 'reduced' && decisions.length > 0 && decisions[decisions.length-1] === 'rejected') {
+            currentMode = 'normal';
+        }
+    }
+    function updateModeDisplay() {
+        const badge = document.getElementById('modeDisplay');
+        const names = { normal: 'нормальний', tightened: 'посилений', reduced: 'послаблений' };
+        badge.textContent = `Режим: ${names[currentMode]}`;
+        badge.style.background = currentMode === 'normal' ? '#d1fae5' : currentMode === 'tightened' ? '#fee2e2' : '#dbeafe';
+    }
+    function addToHistory(plan, dC, dM, dMi, decision, planType) {
+        history.push({
+            id: Date.now().toString(36),
+            date: new Date().toISOString(),
+            lotIdentifier: document.getElementById('lotIdentifier').value.trim() || '—',
+            lotSize: parseInt(document.getElementById('lotSize').value),
+            mode: currentMode,
+            planType,
+            n: plan?.n || plan?.n1,
+            defectsCritical: dC,
+            defectsMajor: dM,
+            defectsMinor: dMi,
+            decision
+        });
+        saveHistory();
+        recalcModeFromHistory();
+        updateModeDisplay();
+        renderHistory();
+    }
+    function renderHistory() {
+        const container = document.getElementById('historyList');
+        if (!history.length) { container.innerHTML = '<p style="color:#64748b; text-align:center; padding:20px 0;">Історія порожня</p>'; return; }
+        let html = `<table class="history-table"><thead><tr><th>ID</th><th>Акт</th><th>Дата</th><th>Рішення</th><th>n</th><th>C</th><th>M</th><th>m</th><th>Режим</th></tr></thead><tbody>`;
+        for (let entry of history.slice(-10).reverse()) {
+            const icon = entry.decision === 'accepted' ? '✅' : '❌';
+            html += `<tr><td>${escapeHtml(entry.id)}</td><td>${escapeHtml(entry.lotIdentifier)}</td><td>${new Date(entry.date).toLocaleString('uk-UA')}</td><td>${icon} ${entry.decision === 'accepted' ? 'Прийнято' : 'Відхилено'}</td><td>${entry.n}</td><td>${entry.defectsCritical}</td><td>${entry.defectsMajor}</td><td>${entry.defectsMinor}</td><td>${escapeHtml(entry.mode)}</td></tr>`;
+        }
+        html += '</tbody></table>';
+        container.innerHTML = html;
+    }
+    function updatePlanPreview() {
+        const N = parseInt(document.getElementById('lotSize').value);
+        const level = document.getElementById('inspectionLevel').value;
+        const planType = document.getElementById('planType').value;
+        const aqlC = document.getElementById('aqlCritical').value;
+        const aqlM = document.getElementById('aqlMajor').value;
+        const aqlMi = document.getElementById('aqlMinor').value;
+        if (isNaN(N) || N < 2) {
+            document.getElementById('planDetails').innerHTML = '<span style="color:red;">Обсяг партії має бути числом ≥ 2</span>';
+            return;
+        }
+        const planC = getSamplingPlan(N, aqlC, level, currentMode, planType);
+        const planM = getSamplingPlan(N, aqlM, level, currentMode, planType);
+        const planMi = getSamplingPlan(N, aqlMi, level, currentMode, planType);
+        if (!planC || !planM || !planMi) {
+            document.getElementById('planDetails').innerHTML = '<span style="color:red;">План не знайдено для заданих параметрів</span>';
+            return;
+        }
+        let planStr = planType === 'single' ?
+            `n = <strong>${planM.n}</strong> (код ${planM.originalCode}${planM.arrow ? ' → ' + planM.code : ''})<br>Critical: Ac/Re = ${planC.ac}/${planC.re}<br>Major: Ac/Re = ${planM.ac}/${planM.re}<br>Minor: Ac/Re = ${planMi.ac}/${planMi.re}` :
+            `n₁ = <strong>${planM.n1}</strong>, n₂ = <strong>${planM.n2}</strong> (код ${planM.originalCode}${planM.arrow ? ' → ' + planM.code : ''})<br>Critical: Ac₁/Re₁ = ${planC.ac1}/${planC.re1}, Ac₂/Re₂ = ${planC.ac2}/${planC.re2}<br>Major: Ac₁/Re₁ = ${planM.ac1}/${planM.re1}, Ac₂/Re₂ = ${planM.ac2}/${planM.re2}<br>Minor: Ac₁/Re₁ = ${planMi.ac1}/${planMi.re1}, Ac₂/Re₂ = ${planMi.ac2}/${planMi.re2}`;
+        let warning = '';
+        if (currentPlans) warning = '<br><span style="color:#f59e0b;">⚠️ Параметри змінено. Для оновлення вибірки натисніть «Сформувати вибірку».</span>';
+        document.getElementById('planDetails').innerHTML = planStr + warning;
+    }
+
+    // Завантаження файлу партії
+    document.getElementById('csvFile').addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        document.getElementById('fileNameDisplay').textContent = file.name;
+        const reader = new FileReader();
+        reader.onload = function(evt) {
+            try {
+                const data = new Uint8Array(evt.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const sheet = workbook.Sheets[workbook.SheetNames[0]];
+                const json = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "", raw: false });
+                if (json.length < 2) { alert("Файл порожній або містить замало даних"); return; }
+                currentHeaders = json[0].map(h => String(h).trim());
+                allDataRows = json.slice(1).filter(row => row.some(cell => cell !== ""));
+                document.getElementById('lotSize').value = allDataRows.length;
+                document.getElementById('autoNote').innerHTML = `✅ Автоматично визначено: <strong>${allDataRows.length}</strong> одиниць`;
+                currentSampleData = null;
+                document.getElementById('sampleBody').innerHTML = '';
+                document.getElementById('verifyResult').innerHTML = '';
+                updatePlanPreview();
+            } catch (err) {
+                console.error(err);
+                alert("Помилка при читанні файлу. Переконайтеся, що це коректний Excel або CSV.");
+            }
+        };
+        reader.readAsArrayBuffer(file);
+    });
+
+    document.getElementById('verifyCsvFile').addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        const display = document.getElementById('verifyFileNameDisplay');
+        if (!file) {
+            display.textContent = 'Файл не вибрано';
+            return;
+        }
+        display.textContent = file.name;
+    });
+
+    function reproduceExactSample() {
+        const N = parseInt(document.getElementById('lotSize').value);
+        const level = document.getElementById('inspectionLevel').value;
+        const planType = document.getElementById('planType').value;
+        const aqlMajor = document.getElementById('aqlMajor').value;
+        if (generationMode === null) return null;
+        const plan = getSamplingPlan(N, aqlMajor, level, generationMode, planType);
+        if (!plan) return null;
+        const sampleSize = planType === 'single' ? plan.n : plan.n1;
+        if (allDataRows.length < sampleSize) return null;
+        const modCol = findModificationColumnIndex(currentHeaders);
+        let indices = [];
+        if (modCol !== -1 && allDataRows.length) {
+            const groups = {};
+            allDataRows.forEach((row, i) => {
+                let modVal = (row[modCol] || '').trim();
+                if (modVal === '') modVal = 'Невідомо';
+                if (!groups[modVal]) groups[modVal] = [];
+                groups[modVal].push(i);
+            });
+            const modNames = Object.keys(groups);
+            if (modNames.length > 1) {
+                modNames.forEach(name => {
+                    const grp = groups[name];
+                    const quota = Math.round((grp.length / allDataRows.length) * sampleSize);
+                    const shuf = fisherYates(grp, currentSeed + name.length);
+                    indices.push(...shuf.slice(0, quota));
+                });
+                while (indices.length > sampleSize) indices.pop();
+                const usedSet = new Set(indices);
+                const rest = allDataRows.map((_, i) => i).filter(i => !usedSet.has(i));
+                while (indices.length < sampleSize && rest.length) indices.push(rest.shift());
+            } else {
+                indices = fisherYates([...Array(allDataRows.length).keys()], currentSeed).slice(0, sampleSize);
+            }
+        } else {
+            indices = fisherYates([...Array(allDataRows.length).keys()], currentSeed).slice(0, sampleSize);
+        }
+        return indices.map(i => allDataRows[i]);
+    }
+
+    async function verifySample() {
+        const verifyResult = document.getElementById('verifyResult');
+        if (!currentPlans) {
+            verifyResult.innerHTML = '❌ Спочатку сформуйте вибірку (кнопка "Сформувати вибірку").';
+            return;
+        }
+        if (!allDataRows.length) {
+            verifyResult.innerHTML = '❌ Відсутні вихідні дані. Завантажте файл партії та натисніть «Сформувати вибірку».';
+            return;
+        }
+        const file = document.getElementById('verifyCsvFile').files[0];
+        if (!file) {
+            verifyResult.innerHTML = '❌ Виберіть файл вибірки для перевірки.';
+            return;
+        }
+        try {
+            const data = await new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = e => resolve(new Uint8Array(e.target.result));
+                reader.onerror = reject;
+                reader.readAsArrayBuffer(file);
+            });
+            const workbook = XLSX.read(data, { type: 'array' });
+            const sheet = workbook.Sheets[workbook.SheetNames[0]];
+            const json = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "", raw: false });
+            if (json.length < 2) { verifyResult.innerHTML = '❌ Файл вибірки порожній.'; return; }
+            const uploadedRows = json.slice(1).filter(row => row.some(cell => cell !== ""));
+            const reproduced = reproduceExactSample();
+            if (!reproduced) { verifyResult.innerHTML = '❌ Не вдалося відтворити вибірку (помилка логіки).'; return; }
+            const canonical = row => row.map(cell => String(cell).trim()).join('\x01');
+            const expectedSet = new Set(reproduced.map(canonical));
+            const uploadedSet = new Set(uploadedRows.map(canonical));
+            const missing = [...expectedSet].filter(x => !uploadedSet.has(x));
+            const extra = [...uploadedSet].filter(x => !expectedSet.has(x));
+            if (missing.length === 0 && extra.length === 0) {
+                verifyResult.innerHTML = '✅ <strong>Вибірку підтверджено!</strong> (повний збіг із seed-еталоном)';
+            } else {
+                let msg = '<strong>❌ Невідповідність еталону</strong><br>';
+                if (missing.length) {
+                    msg += `Відсутні в завантаженому файлі (${missing.length}):<br>`;
+                    missing.slice(0, 5).forEach(m => msg += `&nbsp;&nbsp;${m.replace(/\x01/g, ', ')}<br>`);
+                    if (missing.length > 5) msg += `&nbsp;&nbsp;... ще ${missing.length - 5}<br>`;
+                }
+                if (extra.length) {
+                    msg += `Зайві в завантаженому файлі (${extra.length}):<br>`;
+                    extra.slice(0, 5).forEach(e => msg += `&nbsp;&nbsp;${e.replace(/\x01/g, ', ')}<br>`);
+                    if (extra.length > 5) msg += `&nbsp;&nbsp;... ще ${extra.length - 5}<br>`;
+                }
+                verifyResult.innerHTML = msg;
+            }
+        } catch (err) {
+            console.error(err);
+            verifyResult.innerHTML = `❌ Помилка обробки файлу: ${err.message}`;
+        }
+    }
+
+    // ========== СКАНЕР ==========
+    let html5QrcodeScanner = null;
+
+    async function onScanSuccess(decodedText) {
+        const resultDiv = document.getElementById('verifyResult');
+        const serialCol = findSerialColumnIndex(currentHeaders);
+        const found = currentSampleData.find(row => 
+            String(row[serialCol]).trim().toLowerCase() === decodedText.trim().toLowerCase()
+        );
+        if (found) {
+            showToast(`✅ Знайдено: ${decodedText}`);
+            resultDiv.innerHTML = `<div style="color:#10b981; font-weight:700;">✅ Одиницю підтверджено: ${escapeHtml(decodedText)}</div>` + resultDiv.innerHTML;
+        } else {
+            showToast(`❌ Відсутній: ${decodedText}`);
+            resultDiv.innerHTML = `<div style="color:#ef4444; font-weight:700;">❌ Одиниця не входить у вибірку: ${escapeHtml(decodedText)}</div>` + resultDiv.innerHTML;
+        }
+    }
+
+    document.getElementById('startScannerBtn').addEventListener('click', () => {
+        document.getElementById('scanner-container').style.display = 'block';
+        document.getElementById('startScannerBtn').classList.add('hidden');
+        document.getElementById('stopScannerBtn').classList.remove('hidden');
+        html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 });
+        html5QrcodeScanner.render(onScanSuccess);
+    });
+
+    document.getElementById('stopScannerBtn').addEventListener('click', () => {
+        if (html5QrcodeScanner) {
+            html5QrcodeScanner.clear().then(() => {
+                document.getElementById('scanner-container').style.display = 'none';
+                document.getElementById('startScannerBtn').classList.remove('hidden');
+                document.getElementById('stopScannerBtn').classList.add('hidden');
+            });
+        }
+    });
+
+    // Генерація вибірки
+    async function generateSample() {
+        const N = parseInt(document.getElementById('lotSize').value);
+        if (isNaN(N) || N < 2) { alert('Обсяг партії має бути цілим числом ≥ 2'); return; }
+        const level = document.getElementById('inspectionLevel').value;
+        const planType = document.getElementById('planType').value;
+        let seedInput = document.getElementById('seed').value.trim();
+        currentSeed = seedInput ? parseInt(seedInput) : Math.floor(Math.random() * 1000000000);
+        secondSampleGenerated = false;
+        document.getElementById('stage2Inputs').style.display = 'none';
+        ['defectsCritical2','defectsMajor2','defectsMinor2'].forEach(id => document.getElementById(id).value = 0);
+        document.getElementById('decisionResult').innerHTML = '';
+        const aqlC = document.getElementById('aqlCritical').value;
+        const aqlM = document.getElementById('aqlMajor').value;
+        const aqlMi = document.getElementById('aqlMinor').value;
+        const planC = getSamplingPlan(N, aqlC, level, currentMode, planType);
+        const planM = getSamplingPlan(N, aqlM, level, currentMode, planType);
+        const planMi = getSamplingPlan(N, aqlMi, level, currentMode, planType);
+        if (!planC || !planM || !planMi) return alert('Не вдалося визначити план вибірки.');
+        currentPlans = { critical: planC, major: planM, minor: planMi };
+        generationMode = currentMode;
+        
+        let dataRows = [], headers = [];
+        if (allDataRows.length && currentHeaders.length) {
+            dataRows = allDataRows;
+            headers = currentHeaders;
+        } else {
+            headers = ['ID', 'Serial', 'Modification'];
+            for (let i = 1; i <= N; i++) {
+                const serialFixed = `SN${String(i).padStart(6, '0')}`;
+                dataRows.push([i.toString(), serialFixed, `Версія ${(i % 3) + 1}`]);
+            }
+        }
+        const serialCol = findSerialColumnIndex(headers);
+        const modCol = findModificationColumnIndex(headers);
+        const sampleSize = planType === 'single' ? planM.n : planM.n1;
+        if (dataRows.length < sampleSize) return alert(`Недостатньо даних. Потрібно мінімум ${sampleSize}, є ${dataRows.length}`);
+        
+        let firstIndices = [];
+        if (modCol !== -1 && allDataRows.length) {
+            const groups = {};
+            dataRows.forEach((row, i) => {
+                const modVal = (row[modCol] || '').trim() || 'Невідомо';
+                if (!groups[modVal]) groups[modVal] = [];
+                groups[modVal].push(i);
+            });
+            const modNames = Object.keys(groups);
+            if (modNames.length > 1) {
+                modNames.forEach(name => {
+                    const grp = groups[name];
+                    const quota = Math.round((grp.length / dataRows.length) * sampleSize);
+                    const shuf = fisherYates(grp, currentSeed + name.length);
+                    firstIndices.push(...shuf.slice(0, quota));
+                });
+                while (firstIndices.length > sampleSize) firstIndices.pop();
+                const usedSet = new Set(firstIndices);
+                const rest = dataRows.map((_, i) => i).filter(i => !usedSet.has(i));
+                while (firstIndices.length < sampleSize && rest.length) firstIndices.push(rest.shift());
+            } else {
+                firstIndices = fisherYates([...Array(dataRows.length).keys()], currentSeed).slice(0, sampleSize);
+            }
+        } else {
+            firstIndices = fisherYates([...Array(dataRows.length).keys()], currentSeed).slice(0, sampleSize);
+        }
+        currentSampleData = firstIndices.map(i => dataRows[i]);
+        remainingIndices = dataRows.map((_, i) => i).filter(i => !firstIndices.includes(i));
+        modGroups = {};
+        currentSampleData.forEach(row => {
+            const serial = row[serialCol] || '';
+            const mod = (modCol !== -1 ? (row[modCol] || '').trim() : '') || '—';
+            if (!modGroups[mod]) modGroups[mod] = [];
+            modGroups[mod].push(serial);
+        });
+        let planStr = planType === 'single' ?
+            `n = <strong>${planM.n}</strong> (код ${planM.originalCode}${planM.arrow ? ' → ' + planM.code : ''})<br>Critical: Ac/Re = ${planC.ac}/${planC.re}<br>Major: Ac/Re = ${planM.ac}/${planM.re}<br>Minor: Ac/Re = ${planMi.ac}/${planMi.re}` :
+            `n₁ = <strong>${planM.n1}</strong>, n₂ = <strong>${planM.n2}</strong> (код ${planM.originalCode}${planM.arrow ? ' → ' + planM.code : ''})<br>Critical: Ac₁/Re₁ = ${planC.ac1}/${planC.re1}, Ac₂/Re₂ = ${planC.ac2}/${planC.re2}<br>Major: Ac₁/Re₁ = ${planM.ac1}/${planM.re1}, Ac₂/Re₂ = ${planM.ac2}/${planM.re2}<br>Minor: Ac₁/Re₁ = ${planMi.ac1}/${planMi.re1}, Ac₂/Re₂ = ${planMi.ac2}/${planMi.re2}`;
+        document.getElementById('planDetails').innerHTML = `
+            Код: <strong>${planM.originalCode}${planM.arrow ? ' → ' + planM.code : ''}</strong> | ${planStr}<br>
+            Рівень: ${level} | Режим: <strong>${currentMode.toUpperCase()}</strong><br>
+            Метод відбору: <strong>${modCol !== -1 && Object.keys(modGroups).length > 1 ? 'стратифікований пропорційний' : 'Fisher‑Yates shuffle'}</strong> (seed ${currentSeed})
+        `;
+        renderSampleTable(currentSampleData, currentHeaders);
+        document.getElementById('sampleHeader').textContent = planType === 'single' ? `Вибірка (n = ${planM.n})` : `Перша вибірка (n₁ = ${planM.n1})`;
+        document.getElementById('planCard').classList.remove('hidden');
+        document.getElementById('verifyCard').classList.remove('hidden');
+        document.getElementById('decisionCard').classList.remove('hidden');
+    }
+
+    // Аналіз дефектів
+    document.getElementById('analyzeBtn').addEventListener('click', () => {
+        if (!currentPlans) return alert('Спочатку сформуйте вибірку');
+        const planType = currentPlans.major.type;
+        const dC = parseInt(document.getElementById('defectsCritical').value) || 0;
+        const dM = parseInt(document.getElementById('defectsMajor').value) || 0;
+        const dMi = parseInt(document.getElementById('defectsMinor').value) || 0;
+        if (planType === 'double' && !secondSampleGenerated) {
+            const needSecond = (dC > currentPlans.critical.ac1 && dC < currentPlans.critical.re1) ||
+                (dM > currentPlans.major.ac1 && dM < currentPlans.major.re1) ||
+                (dMi > currentPlans.minor.ac1 && dMi < currentPlans.minor.re1);
+            if (needSecond) {
+                if (remainingIndices.length < currentPlans.major.n2) {
+                    alert(`Недостатньо даних для другої вибірки. Потрібно ще ${currentPlans.major.n2} елементів, доступно ${remainingIndices.length}.`);
+                    return;
+                }
+                document.getElementById('stage2Inputs').style.display = 'block';
+                document.getElementById('decisionResult').innerHTML = '<strong>⚠️ Потрібна друга вибірка.</strong> Вкажіть дефекти у другій вибірці та натисніть "Аналізувати" знову.';
+                if (remainingIndices.length >= currentPlans.major.n2 && allDataRows.length > 0) {
+                    const secondSample = remainingIndices.slice(0, currentPlans.major.n2).map(i => allDataRows[i]);
+                    currentSampleData = [...currentSampleData, ...secondSample];
+                    renderSampleTable(currentSampleData, currentHeaders);
+                    document.getElementById('sampleHeader').textContent = `Перша + друга вибірка (n₁=${currentPlans.major.n1}, n₂=${currentPlans.major.n2})`;
+                    remainingIndices = remainingIndices.slice(currentPlans.major.n2);
+                }
+                secondSampleGenerated = true;
+                return;
+            }
+        }
+        let isRejected = false, reasons = [];
+        if (planType === 'single') {
+            if (dC >= currentPlans.critical.re) { isRejected = true; reasons.push(`Критичні: ${dC} ≥ Re=${currentPlans.critical.re}`); }
+            if (dM >= currentPlans.major.re) { isRejected = true; reasons.push(`Значні: ${dM} ≥ Re=${currentPlans.major.re}`); }
+            if (dMi >= currentPlans.minor.re) { isRejected = true; reasons.push(`Незначні: ${dMi} ≥ Re=${currentPlans.minor.re}`); }
+        } else {
+            const dC2 = parseInt(document.getElementById('defectsCritical2').value) || 0;
+            const dM2 = parseInt(document.getElementById('defectsMajor2').value) || 0;
+            const dMi2 = parseInt(document.getElementById('defectsMinor2').value) || 0;
+            const totC = dC + dC2, totM = dM + dM2, totMi = dMi + dMi2;
+            if (dC >= currentPlans.critical.re1 || totC >= currentPlans.critical.re2) { isRejected = true; reasons.push(`Критичні: ${totC} ≥ Re₂`); }
+            if (dM >= currentPlans.major.re1 || totM >= currentPlans.major.re2) { isRejected = true; reasons.push(`Значні: ${totM} ≥ Re₂`); }
+            if (dMi >= currentPlans.minor.re1 || totMi >= currentPlans.minor.re2) { isRejected = true; reasons.push(`Незначні: ${totMi} ≥ Re₂`); }
+        }
+        const resultDiv = document.getElementById('decisionResult');
+        if (isRejected) {
+            resultDiv.innerHTML = `<strong style="color:#ef4444;">❌ ПАРТІЮ ВІДХИЛЕНО</strong><br>${reasons.join('<br>')}
+                <div class="operator-buttons"><button id="confirmRejectBtn" class="danger">Підтвердити відхилення</button></div>`;
+        } else {
+            resultDiv.innerHTML = `<strong style="color:#10b981;">✅ ПАРТІЮ МОЖНА ПРИЙНЯТИ</strong><br>Дефекти в межах допустимих значень.
+                <div class="operator-buttons"><button id="acceptLotBtn" class="success">✅ Прийняти партію</button>
+                <button id="rejectLotBtn" class="danger">❌ Відхилити партію</button></div>`;
+        }
+    });
+    document.getElementById('decisionResult').addEventListener('click', function(e) {
+        if (!e.target.matches('button')) return;
+        const btn = e.target;
+        const dC = parseInt(document.getElementById('defectsCritical').value) || 0;
+        const dM = parseInt(document.getElementById('defectsMajor').value) || 0;
+        const dMi = parseInt(document.getElementById('defectsMinor').value) || 0;
+        if (btn.id === 'confirmRejectBtn') {
+            addToHistory(currentPlans.major, dC, dM, dMi, 'rejected', currentPlans.major.type);
+            document.getElementById('decisionResult').innerHTML = '<strong style="color:#ef4444;">❌ Партію відхилено.</strong>';
+        } else if (btn.id === 'acceptLotBtn') {
+            addToHistory(currentPlans.major, dC, dM, dMi, 'accepted', currentPlans.major.type);
+            document.getElementById('decisionResult').innerHTML = '<strong style="color:#10b981;">✅ Партію прийнято.</strong>';
+        } else if (btn.id === 'rejectLotBtn') {
+            addToHistory(currentPlans.major, dC, dM, dMi, 'rejected', currentPlans.major.type);
+            document.getElementById('decisionResult').innerHTML = '<strong style="color:#ef4444;">❌ Партію відхилено.</strong>';
+        }
+    });
+
+    // Акт відбору
+    function buildActHTML() {
+        const number = document.getElementById('actNumber').value.trim();
+        const dateRaw = document.getElementById('actDate').value;
+        const actDate = (dateRaw ? new Date(dateRaw) : new Date()).toLocaleDateString('uk-UA', { day:'numeric', month:'long', year:'numeric' }).replace(' р.', '');
+        const decisionDateRaw = document.getElementById('decisionDate').value;
+        const decisionDate = decisionDateRaw ? new Date(decisionDateRaw).toLocaleDateString('uk-UA', { day:'numeric', month:'long', year:'numeric' }).replace(' р.', '') : '';
+        const decisionNumber = document.getElementById('decisionNumber').value.trim();
+        const company = document.getElementById('actCompany').value.trim();
+        const address = document.getElementById('actAddress').value.trim();
+        const inspector = document.getElementById('actInspector').value.trim();
+        const inspectorPos = document.getElementById('actInspectorPos').value.trim();
+        const applicant = document.getElementById('actApplicant').value.trim();
+        const applicantPos = document.getElementById('actApplicantPos').value.trim();
+        const signOov = document.getElementById('signatoryOov').value.trim() || inspector;
+        const signApp = document.getElementById('signatoryApplicant').value.trim() || applicant;
+        const deviceType = document.getElementById('actDeviceType').value.trim();
+        const modificationField = document.getElementById('actModification').value.trim();
+        const testLocation = document.getElementById('actTestLocation').value.trim();
+        const lotSize = document.getElementById('lotSize').value;
+        const sampleCount = currentSampleData ? currentSampleData.length : 0;
+        
+        let modTableHtml = '';
+        if (modGroups && Object.keys(modGroups).length > 0) {
+            modTableHtml = `<table><th>Модифікація</th><th>Заводські номери</th><th style="width:15%;">Кількість</th></tr>`;
+            for (let [mod, serials] of Object.entries(modGroups)) {
+                modTableHtml += `<tr><td>${escapeHtml(mod)}</td><td>${escapeHtml(serials.join(', '))}</td><td>${serials.length}</td></tr>`;
+            }
+            modTableHtml = `<table>${modTableHtml}</table>`;
+        } else {
+            const serialCol = findSerialColumnIndex(currentHeaders);
+            const allSerials = currentSampleData ? currentSampleData.map(row => row[serialCol] || '').filter(s => s).join(', ') : '';
+            modTableHtml = `<p><strong>Заводські номери:</strong> ${escapeHtml(allSerials)}</p>`;
+        }
+        
+        let leftHeaderHtml = '';
+        if (actLogoDataUrl) leftHeaderHtml += `<div><img src="${actLogoDataUrl}" style="max-height:70px; margin-bottom:4px;"></div>`;
+        leftHeaderHtml += `<div class="logo">UA.TR.001</div>`;
+        
+        let decisionLine = '';
+        if (decisionDate || decisionNumber) decisionLine = `<p><strong>відповідно до рішення</strong> від ${decisionDate || '________'} № ${decisionNumber || '________'}</p>`;
+        
+        return `<!DOCTYPE html><html lang="uk"><head><meta charset="UTF-8"><title>Акт відбору зразків</title>
+    <style>
+      body { font-family: 'Segoe UI', system-ui, sans-serif; max-width: 900px; margin: 20px auto; padding: 20px 20px 0 20px; color: #1e293b; line-height: 1.5; }
+      .header { border-bottom: 2px solid #3b82f6; padding-bottom: 10px; margin-bottom: 20px; display: flex; align-items: flex-start; }
+      .left-block { flex-shrink: 0; } .right-block { flex: 1; display: flex; justify-content: center; }
+      .org { text-align: center; font-size: 1rem; }
+      h1 { font-size: 14pt; margin: 12px 0 6px; text-transform: uppercase; text-align: center; }
+      .date-number-row { display: flex; justify-content: space-between; margin: 16px 0; }
+      table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+      th, td { border: 1px solid #cbd5e1; padding: 8px; font-size: 0.9rem; }
+      th { background: #f1f5f9; text-align: left; width: 35%; }
+      .signature-block { margin-top: 40px; margin-bottom: 0; }
+      .signature-row { display: flex; align-items: baseline; margin-bottom: 15px; }
+      .signature-label { font-weight: 600; margin-right: 10px; white-space: nowrap; }
+      .signature-line { flex: 1; border-bottom: 1px solid #000; margin: 0 10px; }
+      .signature-name { white-space: nowrap; font-weight: 600; }
+      @page { size: A4; margin: 5mm 10mm 30mm 10mm; @bottom-left { content: "03А-3.10ПР-1.1"; font-size: 0.8rem; border-top: 1px solid #cbd5e1; padding-top: 4px; } @bottom-center { content: "Сторінка " counter(page) " Сторінок " counter(pages); font-size: 0.8rem; border-top: 1px solid #cbd5e1; padding-top: 4px; } }
+    </style></head><body>
+    <div class="header"><div class="left-block">${leftHeaderHtml}</div><div class="right-block"><div class="org">Орган з оцінки відповідності<br>ДП «УКРМЕТТРЕСТСТАНДАРТ»<br>вул. Метрологічна, 4, м. Київ, 03143, Україна</div></div></div>
+    <h1>АКТ<br>відбору зразків</h1><br>
+    <div class="date-number-row"><span><strong>${actDate}</strong></span><span><strong>№ ${escapeHtml(number)}</strong></span></div><br>
+    <p><strong>На</strong> ${escapeHtml(company)}, ${escapeHtml(address)}</p>
+    <p><strong>Мною (нами),</strong> ${escapeHtml(inspectorPos)} ${escapeHtml(inspector)}</p>
+    <p><strong>у присутності</strong> ${escapeHtml(applicantPos)} ${escapeHtml(applicant)}</p>
+    <p>відібрано зразки ЗВТ, заявлених для проведення оцінки відповідності вимогам Технічного регламенту законодавчо регульованих засобів вимірювальної техніки, затвердженого постановою Кабінету Міністрів України від 13 січня 2016 р. № 94 (Модуль F)</p>
+    ${decisionLine}
+    <p><strong>Метод відбору згідно процедури ПР-3.10/33-02.3:</strong> використовуючи Додаток А ДСТУ ISO 24153:2014 (з застосуванням стратифікованого випадкового відбору, якщо партія складається з декількох модифікацій/виконань в межах одного затвердженого типу ЗВТ) та таблиці вибіркового контролю згідно з ДСТУ ISO 2859-1:2014<br>Seed: ${currentSeed ?? '—'}</p>
+    <tr>
+      <tr><th>Назва ЗВТ</th><td>Лічильник електричної енергії статичний однофазний</td></tr>
+      <tr><th>Тип ЗВТ</th><td>${escapeHtml(deviceType)}</td></tr>
+      <tr><th>Версія ПО</th><td>${escapeHtml(modificationField)}</td></tr>
+      <tr><th>Розмір партії (шт.)</th><td>${escapeHtml(lotSize)}</td></tr>
+      <tr><th>Кількість відібраних зразків (шт.)</th><td>${escapeHtml(sampleCount)}</td></tr>
+    </table>
+    ${modTableHtml}
+    <p>Зразки ідентифіковані, відповідають заявці.</p>
+    <p><strong>Випробування будуть проведені на виробничій базі</strong> ${escapeHtml(testLocation)}</p>
+    <div class="signature-block">
+      <div class="signature-row"><span class="signature-label">Представник ООВ</span><span class="signature-line"></span><span class="signature-name">${escapeHtml(signOov)}</span></div>
+      <br><br>
+      <div class="signature-row"><span class="signature-label">Представник заявника</span><span class="signature-line"></span><span class="signature-name">${escapeHtml(signApp)}</span></div>
+    </div>
+    </body></html>`;
+    }
+
+    document.getElementById('generateActBtn').addEventListener('click', () => {
+        if (!currentSampleData || !currentPlans) return alert('Спочатку сформуйте вибірку.');
+        const win = window.open('', '_blank', 'width=900,height=700');
+        win.document.write(buildActHTML());
+        win.document.close();
+    });
+    document.getElementById('pdfBtn').addEventListener('click', () => {
+        if (history.length === 0) return alert('Немає записів для звіту');
+        const last = history[history.length - 1];
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        doc.setFontSize(16); doc.text('ISO 2859-1 Inspection Report', 20, 20);
+        doc.setFontSize(11);
+        doc.text(`Date: ${new Date(last.date).toLocaleString('uk-UA')}`, 20, 30);
+        doc.text(`Lot: ${last.lotIdentifier} (N=${last.lotSize})`, 20, 38);
+        doc.text(`Mode: ${last.mode} | Plan: ${last.planType} | Sample n=${last.n}`, 20, 46);
+        doc.text(`Critical: ${last.defectsCritical}`, 20, 54);
+        doc.text(`Major: ${last.defectsMajor}`, 20, 62);
+        doc.text(`Minor: ${last.defectsMinor}`, 20, 70);
+        doc.text(`Decision: ${last.decision.toUpperCase()}`, 20, 78);
+        doc.save(`inspection_${last.id}.pdf`);
+    });
+
+    function fillActDefaults() { document.getElementById('actDate').value = new Date().toISOString().slice(0,10); }
+    (function setDefaultSeed() {
+        const now = new Date();
+        document.getElementById('seed').value = `${String(now.getDate()).padStart(2,'0')}${String(now.getMonth()+1).padStart(2,'0')}${now.getFullYear()}${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}`;
+    })();
+    fillActDefaults();
+    loadHistory();
+    updateModeDisplay();
+    renderHistory();
+    updatePlanPreview();
+
+    document.getElementById('generateBtn').addEventListener('click', generateSample);
+    document.getElementById('copySeedBtn').addEventListener('click', () => {
+        const seedInput = document.getElementById('seed');
+        seedInput.select();
+        document.execCommand('copy');
+        showToast('Seed скопійовано');
+    });
+    const autoUpdateFields = ['lotSize', 'inspectionLevel', 'planType', 'aqlCritical', 'aqlMajor', 'aqlMinor'];
+    autoUpdateFields.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('change', updatePlanPreview);
+    });
+    document.getElementById('verifyBtn').addEventListener('click', verifySample);
+    document.getElementById('downloadCsvRandomBtn').addEventListener('click', () => exportToCSV(false));
+    document.getElementById('downloadCsvSortedBtn').addEventListener('click', () => exportToCSV(true));
+    document.getElementById('downloadExcelRandomBtn').addEventListener('click', () => exportToExcel(false));
+    document.getElementById('downloadExcelSortedBtn').addEventListener('click', () => exportToExcel(true));
+    document.getElementById('actLogo').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (!file) { actLogoDataUrl = null; document.getElementById('actLogoPreview').innerHTML = ''; return; }
+        const reader = new FileReader();
+        reader.onload = ev => { actLogoDataUrl = ev.target.result; document.getElementById('actLogoPreview').innerHTML = `<img src="${ev.target.result}" style="max-height:60px;">`; };
+        reader.readAsDataURL(file);
+    });
+    document.getElementById('clearFormBtn').addEventListener('click', () => {
+        document.getElementById('lotIdentifier').value = '25/3/F/41/';
+        document.getElementById('lotSize').value = '500';
+        document.getElementById('aqlCritical').value = '0.65';
+        document.getElementById('aqlMajor').value = '1.0';
+        document.getElementById('aqlMinor').value = '2.5';
+        document.getElementById('inspectionLevel').value = 'II';
+        document.getElementById('planType').value = 'single';
+        const now = new Date();
+        document.getElementById('seed').value = `${String(now.getDate()).padStart(2,'0')}${String(now.getMonth()+1).padStart(2,'0')}${now.getFullYear()}${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}`;
+        document.getElementById('csvFile').value = '';
+        document.getElementById('fileNameDisplay').textContent = 'Файл не вибрано';
+        document.getElementById('autoNote').innerHTML = 'Після вибору файлу обсяг партії визначиться автоматично';
+        document.getElementById('planCard').classList.add('hidden');
+        document.getElementById('verifyCard').classList.add('hidden');
+        document.getElementById('decisionCard').classList.add('hidden');
+        currentSampleData = null; currentHeaders = []; currentPlans = null; currentSeed = null;
+        allDataRows = []; remainingIndices = []; secondSampleGenerated = false; modGroups = null;
+        generationMode = null;
+        ['defectsCritical','defectsMajor','defectsMinor','defectsCritical2','defectsMajor2','defectsMinor2'].forEach(id => document.getElementById(id).value = 0);
+        document.getElementById('stage2Inputs').style.display = 'none';
+        document.getElementById('decisionResult').innerHTML = '';
+        document.getElementById('sampleBody').innerHTML = '';
+        document.getElementById('verifyResult').innerHTML = '';
+        document.getElementById('verifyCsvFile').value = '';
+        document.getElementById('verifyFileNameDisplay').textContent = 'Файл не вибрано';
+        actLogoDataUrl = null;
+        document.getElementById('actLogo').value = '';
+        document.getElementById('actLogoPreview').innerHTML = '';
+        document.getElementById('decisionDate').value = '';
+        document.getElementById('decisionNumber').value = '';
+        document.getElementById('signatoryOov').value = '';
+        document.getElementById('signatoryApplicant').value = '';
+        fillActDefaults();
+        updatePlanPreview();
+    });
+    document.getElementById('clearHistoryBtn').addEventListener('click', () => {
+        if (confirm('Очистити всю історію?')) { history = []; saveHistory(); currentMode = 'normal'; updateModeDisplay(); renderHistory(); }
+    });
+
+    // ========== PWA: динамічний manifest та service worker ==========
+    function setupPWA() {
+        // Створюємо manifest як Blob і підключаємо
+        const manifest = {
+            name: "ISO 2859-1 PRO Контроль",
+            short_name: "ISO-QC",
+            start_url: location.href,
+            display: "standalone",
+            background_color: "#f5f7fb",
+            theme_color: "#3b82f6",
+            icons: [{ src: "https://cdn-icons-png.flaticon.com/512/1573/1573301.png", sizes: "512x512", type: "image/png" }]
+        };
+        const blob = new Blob([JSON.stringify(manifest)], { type: 'application/json' });
+        const manifestURL = URL.createObjectURL(blob);
+        const link = document.createElement('link');
+        link.rel = 'manifest';
+        link.href = manifestURL;
+        document.head.appendChild(link);
+
+        // Реєструємо Service Worker через Blob (працює в сучасних браузерах)
+        if ('serviceWorker' in navigator) {
+            const swCode = `
+                const CACHE_NAME = 'iso-qc-v2';
+                const assets = [
+                    self.location.href,
+                    'https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js',
+                    'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',
+                    'https://unpkg.com/html5-qrcode'
+                ];
+                self.addEventListener('install', e => {
+                    e.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(assets)));
+                });
+                self.addEventListener('fetch', e => {
+                    e.respondWith(caches.match(e.request).then(res => res || fetch(e.request)));
+                });
+            `;
+            const swBlob = new Blob([swCode], { type: 'application/javascript' });
+            const swURL = URL.createObjectURL(swBlob);
+            navigator.serviceWorker.register(swURL).then(reg => {
+                console.log('PWA Service Worker зареєстровано через Blob');
+            }).catch(err => console.warn('Не вдалося зареєструвати Service Worker (можливо, потрібен HTTPS або localhost):', err));
+        }
+    }
+    setupPWA();
+})();
+</script>
+</body>
+</html>
