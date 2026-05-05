@@ -199,7 +199,7 @@
             <label>Тип ЗВТ</label>
             <input type="text" id="actDeviceType" value="EDE1000 smart">
             <label>Модифікація / Версія ПЗ</label>
-            <input type="text" id="actModification" value="Версія ПЗ: E30-110-v.1.01.0008">
+            <input type="text" id="actModification" value=" E30-110-v.1.01.0008">
             <label>Місце випробувань</label>
             <input type="text" id="actTestLocation" value="ТОВ «ПАУЕРГАЗ», вул. Сім'ї Шовкоплясів, 6-А, м. Київ, 04209">
         </div>
@@ -889,9 +889,9 @@
     ${decisionLine}
     <p><strong>Метод відбору згідно процедури ПР-3.10/33-02.3:</strong> використовуючи Додаток А ДСТУ ISO 24153:2014 (з застосуванням стратифікованого випадкового відбору, якщо партія складається з декількох модифікацій/виконань в межах одного затвердженого типу ЗВТ) та таблиці вибіркового контролю згідно з ДСТУ ISO 2859-1:2014<br>Seed: ${currentSeed ?? '—'}</p>
     <tr>
-      <tr><th>Назва ЗВТ: </th><td>Лічильник електричної енергії статичний однофазний </td></tr>
+      <tr><th>Назва ЗВТ: </th><td>Лічильник електричної енергії статичний однофазний. </td></tr>
       <tr><th>Тип ЗВТ: </th><td>${escapeHtml(deviceType)}</td></tr>
-      <tr><th>Версія ПО: </th><td>${escapeHtml(modificationField)}</td></tr>
+      <tr><th>Версія ПЗ: </th><td>${escapeHtml(modificationField)}</td></tr>
       <tr><th>Розмір партії (шт.): </th><td>${escapeHtml(lotSize)}</td></tr>
       <tr><th>Кількість відібраних зразків (шт.): </th><td>${escapeHtml(sampleCount)}</td></tr>
     </table>
