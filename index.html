@@ -200,6 +200,12 @@
             <input type="date" id="decisionDate">
             <label>Рішення №</label>
             <input type="text" id="decisionNumber" placeholder="номер рішення">
+            <label>Назва ЗВТ</label>
+            <input type="text" id="actDeviceName" value="Лічильник електричної енергії статичний однофазний">
+            <label>Тип ЗВТ</label>
+            <input type="text" id="actDeviceType" value="EDE1000 smart">
+            <label>Модифікація / Версія ПЗ</label>
+            <input type="text" id="actModification" value=" E30-110-v.1.01.0008">
             <label>Назва підприємства</label>
             <input type="text" id="actCompany" value="ТОВ «ПАУЕРГАЗ»">
             <label>Адреса підприємства</label>
@@ -216,10 +222,6 @@
             <input type="text" id="signatoryOov" value="Горощенко О.О." placeholder="Прізвище та ініціали">
             <label>ПІБ підписанта заявника (якщо відрізняється)</label>
             <input type="text" id="signatoryApplicant" value="Коломієць А.О." placeholder="Прізвище та ініціали">
-            <label>Тип ЗВТ</label>
-            <input type="text" id="actDeviceType" value="EDE1000 smart">
-            <label>Модифікація / Версія ПЗ</label>
-            <input type="text" id="actModification" value=" E30-110-v.1.01.0008">
             <label>Місце випробувань</label>
             <input type="text" id="actTestLocation" value="ТОВ «ПАУЕРГАЗ», вул. Сім'ї Шовкоплясів, 6-А, м. Київ, 04209">
         </div>
@@ -271,6 +273,7 @@
         actApplicant: document.getElementById('actApplicant'),
         actApplicantPos: document.getElementById('actApplicantPos'),
         actDeviceType: document.getElementById('actDeviceType'),
+        actDeviceName: document.getElementById('actDeviceName'),
         actModification: document.getElementById('actModification'),
         actTestLocation: document.getElementById('actTestLocation'),
         actNumber: document.getElementById('actNumber'),
@@ -627,7 +630,7 @@
             const icon = entry.decision === 'accepted' ? '✅' : '❌';
             html += `<tr><td>${escapeHtml(entry.id)}</td><td>${escapeHtml(entry.lotIdentifier)}</td><td>${new Date(entry.date).toLocaleString('uk-UA')}</td><td>${icon} ${entry.decision === 'accepted' ? 'Прийнято' : 'Відхилено'}</td><td>${entry.n}</td><td>${entry.defectsCritical}</td><td>${entry.defectsMajor}</td><td>${entry.defectsMinor}</td><td>${escapeHtml(entry.mode)}</td></tr>`;
         }
-        html += '</tbody></td>';
+        html += '</tbody></table>';
         DOM.historyList.innerHTML = html;
     }
     
@@ -867,7 +870,7 @@
         document.getElementById('decisionCard').classList.remove('hidden');
     }
     
-    // ----------------------------- 11. АНАЛІЗ ДЕФЕКТІВ -----------------------------
+    // ----------------------------- 11. АНАЛІЗ ДЕФЕКТІВ (той самий, що був) -----------------------------
     document.getElementById('analyzeBtn').addEventListener('click', () => {
         if (!currentPlans) return alert('Спочатку сформуйте вибірку');
         const planType = currentPlans.major.type;
@@ -967,6 +970,7 @@
         const applicantPos = DOM.actApplicantPos.value.trim();
         const signOov = DOM.signatoryOov.value.trim() || inspector;
         const signApp = DOM.signatoryApplicant.value.trim() || applicant;
+        const deviceName = DOM.actDeviceName.value.trim();
         const deviceType = DOM.actDeviceType.value.trim();
         const modificationField = DOM.actModification.value.trim();
         const testLocation = DOM.actTestLocation.value.trim();
@@ -975,11 +979,11 @@
         
         let modTableHtml = '';
         if (modGroups && Object.keys(modGroups).length > 0) {
-            modTableHtml = `<table><th>Модифікація</th><th>Заводські номери</th><th style="width:15%;">Кількість</th></tr>`;
+            modTableHtml = `<tr><th>Модифікація</th><th>Заводські номери</th><th style="width:15%;">Кількість</th></tr>`;
             for (let [mod, serials] of Object.entries(modGroups)) {
                 modTableHtml += `<tr><td>${escapeHtml(mod)}</td><td>${escapeHtml(serials.join(', '))}</td><td>${serials.length}</td></tr>`;
             }
-            modTableHtml = `</table>${modTableHtml}</table>`;
+            modTableHtml = `<table>${modTableHtml}</table>`;
         } else {
             const serialCol = findSerialColumnIndex(currentHeaders);
             const allSerials = currentSampleData?.map(row => row[serialCol] || '').filter(s => s).join(', ') || '';
@@ -1021,7 +1025,7 @@
     ${decisionLine}
     <p><strong>Метод відбору згідно процедури ПР-3.10/33-02.3:</strong> використовуючи Додаток А ДСТУ ISO 24153:2014 (з застосуванням стратифікованого випадкового відбору, якщо партія складається з декількох модифікацій/виконань в межах одного затвердженого типу ЗВТ) та таблиці вибіркового контролю згідно з ДСТУ ISO 2859-1:2014<br>Seed: ${currentSeed ?? '—'}</p>
     <table>
-        <tr><th>Назва ЗВТ: </th><td>Лічильник електричної енергії статичний однофазний.</td></tr>
+        <tr><th>Назва ЗВТ: </th><td>${escapeHtml(deviceName)}</td></tr>
         <tr><th>Тип ЗВТ: </th><td>${escapeHtml(deviceType)}</td></tr>
         <tr><th>Версія ПЗ: </th><td>${escapeHtml(modificationField)}</td></tr>
         <tr><th>Розмір партії (шт.): </th><td>${escapeHtml(lotSize)}</td></tr>
