@@ -625,7 +625,7 @@
     
     function renderHistory() {
         if (!history.length) { DOM.historyList.innerHTML = '<p style="color:#64748b; text-align:center; padding:20px 0;">Історія порожня</p>'; return; }
-        let html = `<table class="history-table"><thead><tr><th>ID</th><th>Акт</th><th>Дата</th><th>Рішення</th><th>n</th><th>C</th><th>M</th><th>m</th><th>Режим</th></td></thead><tbody>`;
+        let html = `<table class="history-table"><thead><tr><th>ID</th><th>Акт</th><th>Дата</th><th>Рішення</th><th>n</th><th>C</th><th>M</th><th>m</th><th>Режим</th></tr></thead><tbody>`;
         for (let entry of history.slice(-10).reverse()) {
             const icon = entry.decision === 'accepted' ? '✅' : '❌';
             html += `<tr><td>${escapeHtml(entry.id)}</td><td>${escapeHtml(entry.lotIdentifier)}</td><td>${new Date(entry.date).toLocaleString('uk-UA')}</td><td>${icon} ${entry.decision === 'accepted' ? 'Прийнято' : 'Відхилено'}</td><td>${entry.n}</td><td>${entry.defectsCritical}</td><td>${entry.defectsMajor}</td><td>${entry.defectsMinor}</td><td>${escapeHtml(entry.mode)}</td></tr>`;
@@ -965,7 +965,7 @@
         }
     });
     
-    // ----------------------------- 12. АКТ ВІДБОРУ -----------------------------
+    // ----------------------------- 12. АКТ ВІДБОРУ (ВИПРАВЛЕНИЙ: ПІДПИСИ В КІНЦІ) -----------------------------
     function buildActHTML() {
         const number = DOM.actNumber.value.trim();
         const dateRaw = DOM.actDate.value;
@@ -988,13 +988,15 @@
         const lotSize = DOM.lotSize.value;
         const sampleCount = currentSampleData ? currentSampleData.length : 0;
         
+        // Таблиця модифікацій
         let modTableHtml = '';
         if (modGroups && Object.keys(modGroups).length > 0) {
-            modTableHtml = `<tr><th>Модифікація</th><th>Заводські номери</th><th style="width:15%;">Кількість</th></tr>`;
+            modTableHtml = '<table class="mod-table" style="width:100%; border-collapse:collapse; margin:16px 0;">';
+            modTableHtml += '<thead><tr style="background:#f1f5f9;"><th style="border:1px solid #cbd5e1; padding:8px;">Модифікація</th><th style="border:1px solid #cbd5e1; padding:8px;">Заводські номери</th><th style="border:1px solid #cbd5e1; padding:8px; width:15%;">Кількість</th></tr></thead><tbody>';
             for (let [mod, serials] of Object.entries(modGroups)) {
-                modTableHtml += `<tr><td>${escapeHtml(mod)}</td><td>${escapeHtml(serials.join(', '))}</td><td>${serials.length}</td></tr>`;
+                modTableHtml += `<tr><td style="border:1px solid #cbd5e1; padding:8px;">${escapeHtml(mod)}</td><td style="border:1px solid #cbd5e1; padding:8px;">${escapeHtml(serials.join(', '))}</td><td style="border:1px solid #cbd5e1; padding:8px; text-align:center;">${serials.length}</td></tr>`;
             }
-            modTableHtml = `<table>${modTableHtml}</td>`;
+            modTableHtml += '</tbody></table>';
         } else {
             const serialCol = findSerialColumnIndex(currentHeaders);
             const allSerials = currentSampleData?.map(row => row[serialCol] || '').filter(s => s).join(', ') || '';
