@@ -627,7 +627,7 @@
             const icon = entry.decision === 'accepted' ? '✅' : '❌';
             html += `<tr><td>${escapeHtml(entry.id)}</td><td>${escapeHtml(entry.lotIdentifier)}</td><td>${new Date(entry.date).toLocaleString('uk-UA')}</td><td>${icon} ${entry.decision === 'accepted' ? 'Прийнято' : 'Відхилено'}</td><td>${entry.n}</td><td>${entry.defectsCritical}</td><td>${entry.defectsMajor}</td><td>${entry.defectsMinor}</td><td>${escapeHtml(entry.mode)}</td></tr>`;
         }
-        html += '</tbody></table>';
+        html += '</tbody></td>';
         DOM.historyList.innerHTML = html;
     }
     
@@ -951,7 +951,7 @@
         }
     });
     
-    // ----------------------------- 12. АКТ ВІДБОРУ -----------------------------
+    // ----------------------------- 12. АКТ ВІДБОРУ (ВИПРАВЛЕНИЙ) -----------------------------
     function buildActHTML() {
         const number = DOM.actNumber.value.trim();
         const dateRaw = DOM.actDate.value;
@@ -975,11 +975,11 @@
         
         let modTableHtml = '';
         if (modGroups && Object.keys(modGroups).length > 0) {
-            modTableHtml = `<tr><th>Модифікація</th><th>Заводські номери</th><th style="width:15%;">Кількість</th></tr>`;
+            modTableHtml = `<table><th>Модифікація</th><th>Заводські номери</th><th style="width:15%;">Кількість</th></tr>`;
             for (let [mod, serials] of Object.entries(modGroups)) {
                 modTableHtml += `<tr><td>${escapeHtml(mod)}</td><td>${escapeHtml(serials.join(', '))}</td><td>${serials.length}</td></tr>`;
             }
-            modTableHtml = `<table>${modTableHtml}</table>`;
+            modTableHtml = `</table>${modTableHtml}</table>`;
         } else {
             const serialCol = findSerialColumnIndex(currentHeaders);
             const allSerials = currentSampleData?.map(row => row[serialCol] || '').filter(s => s).join(', ') || '';
