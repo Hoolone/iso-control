@@ -54,6 +54,11 @@
         .seed-wrapper { display: flex; gap: 8px; align-items: center; }
         .seed-wrapper input { flex: 1; }
         .seed-wrapper button { flex: 0 0 auto; margin-top: 0; width: auto; padding: 14px 24px; }
+        .format-settings { background: #f8fafc; border-radius: 16px; padding: 16px; margin-top: 16px; }
+        .format-settings h4 { margin: 0 0 12px 0; font-size: 1rem; }
+        .format-row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+        .format-row label { margin: 0; flex: 1; font-weight: normal; }
+        .format-row input { width: auto; flex: 1; }
     </style>
 </head>
 <body>
@@ -122,6 +127,23 @@
         <button id="verifyBtn" class="secondary" style="margin-top:16px;">✅ Перевірити вибірку</button>
         <div id="verifyResult" class="result-box" style="margin-top:16px;"></div>
         
+        <div class="format-settings">
+            <h4>⚙️ Налаштування сканування QR-коду</h4>
+            <div class="format-row">
+                <label>Обрізати з початку (символів):</label>
+                <input type="number" id="trimStart" min="0" value="0" step="1">
+            </div>
+            <div class="format-row">
+                <label>Обрізати з кінця (символів):</label>
+                <input type="number" id="trimEnd" min="0" value="0" step="1">
+            </div>
+            <div class="flex-row" style="margin-top: 12px;">
+                <button id="testTrimBtn" class="secondary" style="margin-top:0;">🔧 Тест формату</button>
+                <button id="saveTrimBtn" class="secondary" style="margin-top:0;">💾 Зберегти налаштування</button>
+            </div>
+            <div id="testTrimResult" class="note" style="margin-top: 8px;"></div>
+        </div>
+
         <div id="scanner-container" style="display: none; margin-top: 16px;">
             <div id="reader" style="width: 100%; border-radius: 16px; overflow: hidden;"></div>
         </div>
@@ -152,7 +174,6 @@
         </div>
         <button id="analyzeBtn">🔍 Аналізувати дефекти</button>
         <div id="decisionResult" class="result-box"></div>
-
         <h3 style="margin:32px 0 16px 0;">📝 Типові невідповідності для лічильників електроенергії</h3>
         <div class="defect-card"><div class="defect-type critical">Критичні дефекти (Critical)</div><ul style="margin: 8px 0 0 20px; padding:0; line-height:1.8;"><li>Електричний пробій, ризик ураження струмом або пожежі</li><li>Повна несправність лічильника (не рахує зовсім)</li><li>Порушення ізоляції, неправильне заземлення</li><li>Невідповідність схеми підключення, що несе загрозу безпеці</li></ul></div>
         <div class="defect-card"><div class="defect-type major">Значні дефекти (Major)</div><ul style="margin: 8px 0 0 20px; padding:0; line-height:1.8;"><li>Порушення класу точності (перевищення допустимих похибок)</li><li>Збій комунікації (для smart-лічильників)</li><li>Несправність дисплея, індикації або внутрішнього годинника</li><li>Порушення герметичності корпусу, пошкодження пломб</li></ul></div>
@@ -256,10 +277,13 @@
         actLogoPreview: document.getElementById('actLogoPreview'),
         fileNameDisplay: document.getElementById('fileNameDisplay'),
         autoNote: document.getElementById('autoNote'),
-        verifyFileNameDisplay: document.getElementById('verifyFileNameDisplay')
+        verifyFileNameDisplay: document.getElementById('verifyFileNameDisplay'),
+        trimStart: document.getElementById('trimStart'),
+        trimEnd: document.getElementById('trimEnd'),
+        testTrimResult: document.getElementById('testTrimResult')
     };
 
-    // ----------------------------- 2. ISO TABLES -----------------------------
+    // ----------------------------- 2. ISO TABLES (ПОВНІ) -----------------------------
     const SINGLE_NORMAL = {
         "0":   { E:[13,0,1], F:[20,0,1], G:[32,0,1], H:[50,0,1], J:[80,0,1], K:[125,0,1], L:[200,0,1], M:[315,0,1], N:[500,0,1], P:[800,0,1], Q:[1250,0,1] },
         "0.65":{ E:[13,0,1], F:[20,0,1], G:[32,1,2], H:[50,2,3], J:[80,3,4], K:[125,5,6], L:[200,7,8], M:[315,10,11], N:[500,14,15], P:[800,21,22], Q:[1250,21,22] },
@@ -283,7 +307,6 @@
         "2.5":  { E:[20,2,3], F:[32,3,4], G:[50,5,6], H:[80,7,8], J:[125,10,11], K:[200,14,15], L:[315,21,22], M:[500,21,22], N:[800,21,22], P:[1250,21,22], Q:[1250,21,22] },
         "4.0":  { E:[20,3,4], F:[32,5,6], G:[50,7,8], H:[80,10,11], J:[125,14,15], K:[200,21,22], L:[315,21,22], M:[500,21,22], N:[800,21,22], P:[1250,21,22], Q:[1250,21,22] }
     };
-    
     const DOUBLE_NORMAL = {
         "0":   { H:{n1:50,n2:50,Ac1:0,Re1:2,Ac2:1,Re2:2}, J:{n1:80,n2:80,Ac1:0,Re1:2,Ac2:1,Re2:2}, K:{n1:125,n2:125,Ac1:0,Re1:2,Ac2:1,Re2:2}, L:{n1:200,n2:200,Ac1:0,Re1:2,Ac2:1,Re2:2}, M:{n1:315,n2:315,Ac1:0,Re1:2,Ac2:1,Re2:2} },
         "0.65":{ F:{n1:20,n2:20,Ac1:0,Re1:2,Ac2:1,Re2:2}, G:{n1:32,n2:32,Ac1:0,Re1:2,Ac2:1,Re2:2}, H:{n1:50,n2:50,Ac1:1,Re1:3,Ac2:2,Re2:3}, J:{n1:80,n2:80,Ac1:2,Re1:4,Ac2:3,Re2:4}, K:{n1:125,n2:125,Ac1:3,Re1:5,Ac2:4,Re2:5}, L:{n1:200,n2:200,Ac1:5,Re1:7,Ac2:6,Re2:7} },
@@ -309,16 +332,8 @@
     };
     
     const ISO_TABLES = {
-        single: {
-            normal: SINGLE_NORMAL,
-            tightened: SINGLE_TIGHT,
-            reduced: SINGLE_REDUCED
-        },
-        double: {
-            normal: DOUBLE_NORMAL,
-            tightened: DOUBLE_TIGHT,
-            reduced: DOUBLE_REDUCED
-        }
+        single: { normal: SINGLE_NORMAL, tightened: SINGLE_TIGHT, reduced: SINGLE_REDUCED },
+        double: { normal: DOUBLE_NORMAL, tightened: DOUBLE_TIGHT, reduced: DOUBLE_REDUCED }
     };
     
     const CODE_TABLE = [
@@ -394,7 +409,6 @@
         const table = ISO_TABLES[planType][mode];
         const found = findPlanInTable(table[AQL] || {}, code);
         if (!found) return null;
-        
         if (planType === 'single') {
             const [n, ac, re] = found.plan;
             return { type: 'single', code: found.code, originalCode: code, arrow: found.arrow, n, ac, re, aql: AQL };
@@ -424,7 +438,6 @@
         return a; 
     }
     
-    // ----------------------------- 4. ВИБІРКА ІНДЕКСІВ (ЄДИНА ФУНКЦІЯ) -----------------------------
     function getSampleIndices(dataRows, sampleSize, seed, modColIndex) {
         if (modColIndex !== -1 && dataRows.length) {
             const groups = {};
@@ -501,6 +514,42 @@
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([currentHeaders, ...dataToExport]), "Вибірка");
         XLSX.writeFile(wb, getFileName(sorted ? '_sorted.xlsx' : '_random.xlsx'));
+    }
+    
+    // ----------------------------- 4. НАЛАШТУВАННЯ ОБРІЗКИ ДЛЯ СКАНЕРА -----------------------------
+    function loadTrimSettings() {
+        try {
+            const savedStart = localStorage.getItem('scannerTrimStart');
+            const savedEnd = localStorage.getItem('scannerTrimEnd');
+            if (savedStart !== null) DOM.trimStart.value = parseInt(savedStart) || 0;
+            if (savedEnd !== null) DOM.trimEnd.value = parseInt(savedEnd) || 0;
+        } catch(e) {}
+    }
+    function saveTrimSettings() {
+        localStorage.setItem('scannerTrimStart', DOM.trimStart.value);
+        localStorage.setItem('scannerTrimEnd', DOM.trimEnd.value);
+        showToast('Налаштування збережено');
+    }
+    function applyTrim(text) {
+        let start = parseInt(DOM.trimStart.value) || 0;
+        let end = parseInt(DOM.trimEnd.value) || 0;
+        if (start < 0) start = 0;
+        if (end < 0) end = 0;
+        if (start + end > text.length) return '';
+        return text.slice(start, text.length - end);
+    }
+    function testTrim() {
+        let inputEl = document.getElementById('testTrimInput');
+        if (!inputEl) {
+            const div = document.createElement('div');
+            div.innerHTML = `<input type="text" id="testTrimInput" placeholder="Введіть приклад номеру" style="width:100%; margin-bottom:8px;">`;
+            DOM.testTrimResult.parentNode.insertBefore(div, DOM.testTrimResult);
+            inputEl = document.getElementById('testTrimInput');
+            inputEl.addEventListener('keypress', (e) => { if(e.key === 'Enter') testTrim(); });
+        }
+        const raw = inputEl.value;
+        const trimmed = applyTrim(raw);
+        DOM.testTrimResult.innerHTML = `Оригінал: "${escapeHtml(raw)}"<br>Після обрізки: "${escapeHtml(trimmed)}"`;
     }
     
     // ----------------------------- 5. ГЛОБАЛЬНІ ЗМІННІ -----------------------------
@@ -705,19 +754,24 @@
         }
     }
     
-    // ----------------------------- 9. СКАНЕР -----------------------------
+    // ----------------------------- 9. СКАНЕР З ОБРІЗКОЮ -----------------------------
     let html5QrcodeScanner = null;
     async function onScanSuccess(decodedText) {
+        const trimmed = applyTrim(decodedText);
+        if (trimmed === '') {
+            showToast(`Помилка: після обрізки рядок порожній (оригінал: "${decodedText}")`);
+            return;
+        }
         const serialCol = findSerialColumnIndex(currentHeaders);
         const found = currentSampleData?.find(row => 
-            String(row[serialCol]).trim().toLowerCase() === decodedText.trim().toLowerCase()
+            String(row[serialCol]).trim().toLowerCase() === trimmed.toLowerCase()
         );
         if (found) {
-            showToast(`✅ Знайдено: ${decodedText}`);
-            DOM.verifyResult.innerHTML = `<div style="color:#10b981; font-weight:700;">✅ Одиницю підтверджено: ${escapeHtml(decodedText)}</div>` + DOM.verifyResult.innerHTML;
+            showToast(`✅ Знайдено: ${trimmed}`);
+            DOM.verifyResult.innerHTML = `<div style="color:#10b981; font-weight:700;">✅ Одиницю підтверджено: ${escapeHtml(trimmed)}</div>` + DOM.verifyResult.innerHTML;
         } else {
-            showToast(`❌ Відсутній: ${decodedText}`);
-            DOM.verifyResult.innerHTML = `<div style="color:#ef4444; font-weight:700;">❌ Одиниця не входить у вибірку: ${escapeHtml(decodedText)}</div>` + DOM.verifyResult.innerHTML;
+            showToast(`❌ Відсутній: ${trimmed}`);
+            DOM.verifyResult.innerHTML = `<div style="color:#ef4444; font-weight:700;">❌ Одиниця не входить у вибірку: ${escapeHtml(trimmed)}</div>` + DOM.verifyResult.innerHTML;
         }
     }
     document.getElementById('startScannerBtn').addEventListener('click', () => {
@@ -755,7 +809,7 @@
         const planC = getSamplingPlan(N, aqlC, level, currentMode, planType);
         const planM = getSamplingPlan(N, aqlM, level, currentMode, planType);
         const planMi = getSamplingPlan(N, aqlMi, level, currentMode, planType);
-        if (!planC || !planM || !planMi) return alert('Не вдалося визначити план вибірки.');
+        if (!planC || !planM || !planMi) { alert('Не вдалося визначити план вибірки.'); return; }
         currentPlans = { critical: planC, major: planM, minor: planMi };
         
         let dataRows = [], headers = [];
@@ -772,7 +826,7 @@
         const serialCol = findSerialColumnIndex(headers);
         const modCol = findModificationColumnIndex(headers);
         const sampleSize = planType === 'single' ? planM.n : planM.n1;
-        if (dataRows.length < sampleSize) return alert(`Недостатньо даних. Потрібно мінімум ${sampleSize}, є ${dataRows.length}`);
+        if (dataRows.length < sampleSize) { alert(`Недостатньо даних. Потрібно мінімум ${sampleSize}, є ${dataRows.length}`); return; }
         
         const firstIndices = getSampleIndices(dataRows, sampleSize, currentSeed, modCol);
         currentSampleData = firstIndices.map(i => dataRows[i]);
@@ -1021,6 +1075,7 @@
     
     fillActDefaults();
     loadHistory();
+    loadTrimSettings();
     updateModeDisplay();
     renderHistory();
     updatePlanPreview();
@@ -1093,6 +1148,9 @@
     document.getElementById('clearHistoryBtn').addEventListener('click', () => {
         if (confirm('Очистити всю історію?')) { history = []; saveHistory(); currentMode = 'normal'; updateModeDisplay(); renderHistory(); }
     });
+    
+    document.getElementById('testTrimBtn').addEventListener('click', testTrim);
+    document.getElementById('saveTrimBtn').addEventListener('click', saveTrimSettings);
     
     // ----------------------------- 14. PWA (проста реєстрація) -----------------------------
     function setupPWA() {
