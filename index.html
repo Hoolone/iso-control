@@ -625,7 +625,7 @@
     
     function renderHistory() {
         if (!history.length) { DOM.historyList.innerHTML = '<p style="color:#64748b; text-align:center; padding:20px 0;">Історія порожня</p>'; return; }
-        let html = `<table class="history-table"><thead><tr><th>ID</th><th>Акт</th><th>Дата</th><th>Рішення</th><th>n</th><th>C</th><th>M</th><th>m</th><th>Режим</th></tr></thead><tbody>`;
+        let html = `<table class="history-table"><thead><tr><th>ID</th><th>Акт</th><th>Дата</th><th>Рішення</th><th>n</th><th>C</th><th>M</th><th>m</th><th>Режим</th></td></thead><tbody>`;
         for (let entry of history.slice(-10).reverse()) {
             const icon = entry.decision === 'accepted' ? '✅' : '❌';
             html += `<tr><td>${escapeHtml(entry.id)}</td><td>${escapeHtml(entry.lotIdentifier)}</td><td>${new Date(entry.date).toLocaleString('uk-UA')}</td><td>${icon} ${entry.decision === 'accepted' ? 'Прийнято' : 'Відхилено'}</td><td>${entry.n}</td><td>${entry.defectsCritical}</td><td>${entry.defectsMajor}</td><td>${entry.defectsMinor}</td><td>${escapeHtml(entry.mode)}</td></tr>`;
@@ -757,9 +757,19 @@
         }
     }
     
-    // ----------------------------- 9. СКАНЕР З ОБРІЗКОЮ -----------------------------
+    // ----------------------------- 9. СКАНЕР З ОБРІЗКОЮ ТА ТАЙМАУТОМ -----------------------------
     let html5QrcodeScanner = null;
+    let lastScanTime = 0;
+    const SCAN_COOLDOWN_MS = 2000; // 2 секунди
+
     async function onScanSuccess(decodedText) {
+        const now = Date.now();
+        if (now - lastScanTime < SCAN_COOLDOWN_MS) {
+            showToast(`⏳ Зачекайте ${Math.ceil((SCAN_COOLDOWN_MS - (now - lastScanTime)) / 1000)} с...`);
+            return;
+        }
+        lastScanTime = now;
+        
         const trimmed = applyTrim(decodedText);
         if (trimmed === '') {
             showToast(`Помилка: після обрізки рядок порожній (оригінал: "${decodedText}")`);
@@ -777,6 +787,7 @@
             DOM.verifyResult.innerHTML = `<div style="color:#ef4444; font-weight:700;">❌ Одиниця не входить у вибірку: ${escapeHtml(trimmed)}</div>` + DOM.verifyResult.innerHTML;
         }
     }
+    
     document.getElementById('startScannerBtn').addEventListener('click', () => {
         document.getElementById('scanner-container').style.display = 'block';
         document.getElementById('startScannerBtn').classList.add('hidden');
@@ -870,7 +881,7 @@
         document.getElementById('decisionCard').classList.remove('hidden');
     }
     
-    // ----------------------------- 11. АНАЛІЗ ДЕФЕКТІВ (той самий, що був) -----------------------------
+    // ----------------------------- 11. АНАЛІЗ ДЕФЕКТІВ -----------------------------
     document.getElementById('analyzeBtn').addEventListener('click', () => {
         if (!currentPlans) return alert('Спочатку сформуйте вибірку');
         const planType = currentPlans.major.type;
@@ -954,7 +965,7 @@
         }
     });
     
-    // ----------------------------- 12. АКТ ВІДБОРУ (ВИПРАВЛЕНИЙ) -----------------------------
+    // ----------------------------- 12. АКТ ВІДБОРУ -----------------------------
     function buildActHTML() {
         const number = DOM.actNumber.value.trim();
         const dateRaw = DOM.actDate.value;
@@ -983,7 +994,7 @@
             for (let [mod, serials] of Object.entries(modGroups)) {
                 modTableHtml += `<tr><td>${escapeHtml(mod)}</td><td>${escapeHtml(serials.join(', '))}</td><td>${serials.length}</td></tr>`;
             }
-            modTableHtml = `<table>${modTableHtml}</table>`;
+            modTableHtml = `<table>${modTableHtml}</td>`;
         } else {
             const serialCol = findSerialColumnIndex(currentHeaders);
             const allSerials = currentSampleData?.map(row => row[serialCol] || '').filter(s => s).join(', ') || '';
