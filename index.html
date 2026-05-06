@@ -214,7 +214,52 @@
 
 <script>
 (function(){
-    // ========== ТАБЛИЦІ ISO 2859-1 ==========
+    // ----------------------------- 1. КЕШ DOM -----------------------------
+    const DOM = {
+        lotSize: document.getElementById('lotSize'),
+        lotIdentifier: document.getElementById('lotIdentifier'),
+        inspectionLevel: document.getElementById('inspectionLevel'),
+        planType: document.getElementById('planType'),
+        aqlCritical: document.getElementById('aqlCritical'),
+        aqlMajor: document.getElementById('aqlMajor'),
+        aqlMinor: document.getElementById('aqlMinor'),
+        seed: document.getElementById('seed'),
+        planDetails: document.getElementById('planDetails'),
+        sampleBody: document.getElementById('sampleBody'),
+        sampleHeader: document.getElementById('sampleHeader'),
+        decisionResult: document.getElementById('decisionResult'),
+        stage2Inputs: document.getElementById('stage2Inputs'),
+        verifyResult: document.getElementById('verifyResult'),
+        modeDisplay: document.getElementById('modeDisplay'),
+        historyList: document.getElementById('historyList'),
+        defectsCritical: document.getElementById('defectsCritical'),
+        defectsMajor: document.getElementById('defectsMajor'),
+        defectsMinor: document.getElementById('defectsMinor'),
+        defectsCritical2: document.getElementById('defectsCritical2'),
+        defectsMajor2: document.getElementById('defectsMajor2'),
+        defectsMinor2: document.getElementById('defectsMinor2'),
+        actDate: document.getElementById('actDate'),
+        decisionDate: document.getElementById('decisionDate'),
+        decisionNumber: document.getElementById('decisionNumber'),
+        signatoryOov: document.getElementById('signatoryOov'),
+        signatoryApplicant: document.getElementById('signatoryApplicant'),
+        actCompany: document.getElementById('actCompany'),
+        actAddress: document.getElementById('actAddress'),
+        actInspector: document.getElementById('actInspector'),
+        actInspectorPos: document.getElementById('actInspectorPos'),
+        actApplicant: document.getElementById('actApplicant'),
+        actApplicantPos: document.getElementById('actApplicantPos'),
+        actDeviceType: document.getElementById('actDeviceType'),
+        actModification: document.getElementById('actModification'),
+        actTestLocation: document.getElementById('actTestLocation'),
+        actNumber: document.getElementById('actNumber'),
+        actLogoPreview: document.getElementById('actLogoPreview'),
+        fileNameDisplay: document.getElementById('fileNameDisplay'),
+        autoNote: document.getElementById('autoNote'),
+        verifyFileNameDisplay: document.getElementById('verifyFileNameDisplay')
+    };
+
+    // ----------------------------- 2. ISO TABLES -----------------------------
     const SINGLE_NORMAL = {
         "0":   { E:[13,0,1], F:[20,0,1], G:[32,0,1], H:[50,0,1], J:[80,0,1], K:[125,0,1], L:[200,0,1], M:[315,0,1], N:[500,0,1], P:[800,0,1], Q:[1250,0,1] },
         "0.65":{ E:[13,0,1], F:[20,0,1], G:[32,1,2], H:[50,2,3], J:[80,3,4], K:[125,5,6], L:[200,7,8], M:[315,10,11], N:[500,14,15], P:[800,21,22], Q:[1250,21,22] },
@@ -263,6 +308,19 @@
         "4.0":  { D:{n1:13,n2:13,Ac1:0,Re1:2,Ac2:1,Re2:2}, E:{n1:13,n2:13,Ac1:0,Re1:2,Ac2:1,Re2:2}, F:{n1:20,n2:20,Ac1:1,Re1:3,Ac2:2,Re2:3}, G:{n1:32,n2:32,Ac1:3,Re1:5,Ac2:4,Re2:5}, H:{n1:50,n2:50,Ac1:7,Re1:9,Ac2:8,Re2:9}, J:{n1:80,n2:80,Ac1:10,Re1:12,Ac2:11,Re2:12} }
     };
     
+    const ISO_TABLES = {
+        single: {
+            normal: SINGLE_NORMAL,
+            tightened: SINGLE_TIGHT,
+            reduced: SINGLE_REDUCED
+        },
+        double: {
+            normal: DOUBLE_NORMAL,
+            tightened: DOUBLE_TIGHT,
+            reduced: DOUBLE_REDUCED
+        }
+    };
+    
     const CODE_TABLE = [
         [2, 8, 'A'], [9, 15, 'B'], [16, 25, 'C'], [26, 50, 'D'], [51, 90, 'E'], [91, 150, 'F'],
         [151, 280, 'G'], [281, 500, 'H'], [501, 1200, 'J'], [1201, 3200, 'K'], [3201, 10000, 'L'],
@@ -271,7 +329,7 @@
     const CODE_ORDER = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'J', 'K', 'L', 'M', 'N', 'P', 'Q'];
     const LEVEL_SHIFT = { I: -1, II: 0, III: 1 };
 
-    // ========== ДОПОМІЖНІ ФУНКЦІЇ ==========
+    // ----------------------------- 3. ДОПОМІЖНІ ФУНКЦІЇ -----------------------------
     function escapeHtml(str) {
         if (str === undefined || str === null) return '';
         return String(str).replace(/[&<>]/g, function(m) {
@@ -281,6 +339,7 @@
             return m;
         });
     }
+    
     function showToast(msg) {
         const t = document.createElement('div');
         t.className = 'toast';
@@ -288,9 +347,9 @@
         document.body.appendChild(t);
         setTimeout(() => t.remove(), 2500);
     }
+    
     function renderSampleTable(rows, headers) {
-        const container = document.getElementById('sampleBody');
-        container.innerHTML = '';
+        DOM.sampleBody.innerHTML = '';
         const table = document.createElement('table');
         const thead = document.createElement('thead');
         const headerRow = document.createElement('tr');
@@ -312,14 +371,16 @@
             tbody.appendChild(tr);
         });
         table.appendChild(tbody);
-        container.appendChild(table);
+        DOM.sampleBody.appendChild(table);
     }
+    
     function getCodeLetter(N, level = 'II') {
         let base = 'Q';
         for (let [low, high, code] of CODE_TABLE) if (N >= low && N <= high) { base = code; break; }
         let idx = CODE_ORDER.indexOf(base) + LEVEL_SHIFT[level];
         return CODE_ORDER[Math.max(0, Math.min(idx, CODE_ORDER.length - 1))];
     }
+    
     function findPlanInTable(table, desiredCode) {
         if (table[desiredCode]) return { code: desiredCode, plan: table[desiredCode], arrow: false };
         let idx = CODE_ORDER.indexOf(desiredCode);
@@ -327,78 +388,131 @@
         for (let i = idx - 1; i >= 0; i--) if (table[CODE_ORDER[i]]) return { code: CODE_ORDER[i], plan: table[CODE_ORDER[i]], arrow: true };
         return null;
     }
+    
     function getSamplingPlan(N, AQL, level = 'II', mode = 'normal', planType = 'single') {
         const code = getCodeLetter(N, level);
+        const table = ISO_TABLES[planType][mode];
+        const found = findPlanInTable(table[AQL] || {}, code);
+        if (!found) return null;
+        
         if (planType === 'single') {
-            const table = mode === 'normal' ? SINGLE_NORMAL : mode === 'tightened' ? SINGLE_TIGHT : SINGLE_REDUCED;
-            const found = findPlanInTable(table[AQL] || {}, code);
-            if (!found) return null;
             const [n, ac, re] = found.plan;
             return { type: 'single', code: found.code, originalCode: code, arrow: found.arrow, n, ac, re, aql: AQL };
         } else {
-            const doubleTable = mode === 'normal' ? DOUBLE_NORMAL : mode === 'tightened' ? DOUBLE_TIGHT : DOUBLE_REDUCED;
-            const doubleFound = findPlanInTable(doubleTable[AQL] || {}, code);
-            if (doubleFound) {
-                const p = doubleFound.plan;
-                return { type: 'double', code: doubleFound.code, originalCode: code, arrow: doubleFound.arrow, n1: p.n1, n2: p.n2, ac1: p.Ac1, re1: p.Re1, ac2: p.Ac2, re2: p.Re2, aql: AQL };
-            }
-            const singleTable = mode === 'normal' ? SINGLE_NORMAL : mode === 'tightened' ? SINGLE_TIGHT : SINGLE_REDUCED;
-            const singleFound = findPlanInTable(singleTable[AQL] || {}, code);
-            if (singleFound) {
-                const [n, ac, re] = singleFound.plan;
-                return { type: 'single', code: singleFound.code, originalCode: code, arrow: singleFound.arrow, n, ac, re, aql: AQL, _fallback: true };
-            }
-            return null;
+            const p = found.plan;
+            return { type: 'double', code: found.code, originalCode: code, arrow: found.arrow, 
+                     n1: p.n1, n2: p.n2, ac1: p.Ac1, re1: p.Re1, ac2: p.Ac2, re2: p.Re2, aql: AQL };
         }
     }
-    function seededRandom(seed) { let s = seed % 2147483647; if (s <= 0) s += 2147483646; return () => { s = (s * 16807) % 2147483647; return (s - 1) / 2147483646; }; }
-    function fisherYates(arr, seed) { const rng = seededRandom(seed); let a = [...arr]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(rng() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
-    function csvEscape(cell) { const s = String(cell); return (s.includes(',') || s.includes('"') || s.includes('\n')) ? `"${s.replace(/"/g, '""')}"` : s; }
+    
+    function seededRandom(seed) { 
+        let s = seed % 2147483647; 
+        if (s <= 0) s += 2147483646; 
+        return () => { 
+            s = (s * 16807) % 2147483647; 
+            return (s - 1) / 2147483646; 
+        }; 
+    }
+    
+    function fisherYates(arr, seed) { 
+        const rng = seededRandom(seed); 
+        let a = [...arr]; 
+        for (let i = a.length - 1; i > 0; i--) { 
+            const j = Math.floor(rng() * (i + 1)); 
+            [a[i], a[j]] = [a[j], a[i]]; 
+        } 
+        return a; 
+    }
+    
+    // ----------------------------- 4. ВИБІРКА ІНДЕКСІВ (ЄДИНА ФУНКЦІЯ) -----------------------------
+    function getSampleIndices(dataRows, sampleSize, seed, modColIndex) {
+        if (modColIndex !== -1 && dataRows.length) {
+            const groups = {};
+            dataRows.forEach((row, i) => {
+                let modVal = (row[modColIndex] || '').trim();
+                if (modVal === '') modVal = 'Невідомо';
+                if (!groups[modVal]) groups[modVal] = [];
+                groups[modVal].push(i);
+            });
+            const modNames = Object.keys(groups);
+            if (modNames.length > 1) {
+                const indices = [];
+                modNames.forEach(name => {
+                    const grp = groups[name];
+                    const quota = Math.round((grp.length / dataRows.length) * sampleSize);
+                    const shuf = fisherYates(grp, seed + name.length);
+                    indices.push(...shuf.slice(0, quota));
+                });
+                while (indices.length > sampleSize) indices.pop();
+                const usedSet = new Set(indices);
+                const rest = dataRows.map((_, i) => i).filter(i => !usedSet.has(i));
+                while (indices.length < sampleSize && rest.length) indices.push(rest.shift());
+                return indices;
+            }
+        }
+        return fisherYates([...Array(dataRows.length).keys()], seed).slice(0, sampleSize);
+    }
+    
+    function csvEscape(cell) { 
+        const s = String(cell); 
+        return (s.includes(',') || s.includes('"') || s.includes('\n')) ? `"${s.replace(/"/g, '""')}"` : s; 
+    }
+    
     function findSerialColumnIndex(headers) {
         const keywords = ['серій', 'serial', 'заводський', 'номер', 's/n'];
         for (let i = 0; i < headers.length; i++) if (keywords.some(kw => headers[i].toLowerCase().includes(kw))) return i;
         return 1;
     }
+    
     function findModificationColumnIndex(headers) {
         const keywords = ['модиф', 'виконання', 'модифікація', 'версія', 'mod', 'струм'];
         for (let i = 0; i < headers.length; i++) if (keywords.some(kw => headers[i].toLowerCase().includes(kw))) return i;
         return -1;
     }
+    
     function getFileName(suffix) {
-        const id = document.getElementById('lotIdentifier').value.trim() || 'Lot';
+        const id = DOM.lotIdentifier.value.trim() || 'Lot';
         const prefix = id.replace(/[^a-zA-Z0-9а-яА-ЯіІїЇєЄ_\- ]/g, '_').substring(0, 50);
-        const N = document.getElementById('lotSize').value;
+        const N = DOM.lotSize.value;
         const n = currentPlans ? (currentPlans.major.n || currentPlans.major.n1) : 'n';
         return `${prefix}_N${N}_n${n}_seed${currentSeed}${suffix}`;
     }
+    
     function downloadBlob(content, filename, mime) {
         const blob = new Blob([content], { type: mime });
         const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = filename; a.click(); URL.revokeObjectURL(a.href);
     }
+    
+    function prepareExportData(sorted) {
+        if (!currentSampleData) return null;
+        return sorted ? [...currentSampleData].sort((a, b) => String(a[0]).localeCompare(String(b[0]))) : currentSampleData;
+    }
+    
     function exportToCSV(sorted) {
-        if (!currentSampleData) return;
-        const dataToExport = sorted ? [...currentSampleData].sort((a, b) => String(a[0]).localeCompare(String(b[0]))) : currentSampleData;
+        const dataToExport = prepareExportData(sorted);
+        if (!dataToExport) return;
         const csv = currentHeaders.join(',') + '\n' + dataToExport.map(r => r.map(csvEscape).join(',')).join('\n');
         downloadBlob(csv, getFileName(sorted ? '_sorted.csv' : '_random.csv'), 'text/csv');
     }
+    
     function exportToExcel(sorted) {
-        if (!currentSampleData) return;
-        const dataToExport = sorted ? [...currentSampleData].sort((a, b) => String(a[0]).localeCompare(String(b[0]))) : currentSampleData;
+        const dataToExport = prepareExportData(sorted);
+        if (!dataToExport) return;
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([currentHeaders, ...dataToExport]), "Вибірка");
         XLSX.writeFile(wb, getFileName(sorted ? '_sorted.xlsx' : '_random.xlsx'));
     }
-
-    // Глобальні змінні стану
+    
+    // ----------------------------- 5. ГЛОБАЛЬНІ ЗМІННІ -----------------------------
     let history = [];
     let currentMode = 'normal';
     let currentSampleData = null, currentHeaders = [], currentPlans = null, currentSeed = null;
-    let allDataRows = [], remainingIndices = [], secondSampleGenerated = false;
+    let allDataRows = [], secondSampleGenerated = false;
     let precomputedSecondIndices = null;
     let modGroups = null, actLogoDataUrl = null;
     let lastGenerationParams = null;
-
-    // Історія
+    
+    // ----------------------------- 6. ІСТОРІЯ -----------------------------
     function loadHistory() {
         try {
             const stored = localStorage.getItem('iso2859v2_history');
@@ -406,11 +520,13 @@
         } catch (e) { console.warn('Не вдалося завантажити історію'); }
         recalcModeFromHistory();
     }
+    
     function saveHistory() {
         try {
             localStorage.setItem('iso2859v2_history', JSON.stringify(history.slice(-50)));
         } catch (e) { showToast('Помилка збереження історії'); }
     }
+    
     function recalcModeFromHistory() {
         if (history.length === 0) { currentMode = 'normal'; return; }
         const decisions = history.map(e => e.decision);
@@ -428,18 +544,19 @@
             currentMode = 'normal';
         }
     }
+    
     function updateModeDisplay() {
-        const badge = document.getElementById('modeDisplay');
         const names = { normal: 'нормальний', tightened: 'посилений', reduced: 'послаблений' };
-        badge.textContent = `Режим: ${names[currentMode]}`;
-        badge.style.background = currentMode === 'normal' ? '#d1fae5' : currentMode === 'tightened' ? '#fee2e2' : '#dbeafe';
+        DOM.modeDisplay.textContent = `Режим: ${names[currentMode]}`;
+        DOM.modeDisplay.style.background = currentMode === 'normal' ? '#d1fae5' : currentMode === 'tightened' ? '#fee2e2' : '#dbeafe';
     }
+    
     function addToHistory(plan, dC, dM, dMi, decision, planType) {
         history.push({
             id: Date.now().toString(36),
             date: new Date().toISOString(),
-            lotIdentifier: document.getElementById('lotIdentifier').value.trim() || '—',
-            lotSize: parseInt(document.getElementById('lotSize').value),
+            lotIdentifier: DOM.lotIdentifier.value.trim() || '—',
+            lotSize: parseInt(DOM.lotSize.value),
             mode: currentMode,
             planType,
             n: plan?.n || plan?.n1,
@@ -453,33 +570,34 @@
         updateModeDisplay();
         renderHistory();
     }
+    
     function renderHistory() {
-        const container = document.getElementById('historyList');
-        if (!history.length) { container.innerHTML = '<p style="color:#64748b; text-align:center; padding:20px 0;">Історія порожня</p>'; return; }
+        if (!history.length) { DOM.historyList.innerHTML = '<p style="color:#64748b; text-align:center; padding:20px 0;">Історія порожня</p>'; return; }
         let html = `<table class="history-table"><thead><tr><th>ID</th><th>Акт</th><th>Дата</th><th>Рішення</th><th>n</th><th>C</th><th>M</th><th>m</th><th>Режим</th></tr></thead><tbody>`;
         for (let entry of history.slice(-10).reverse()) {
             const icon = entry.decision === 'accepted' ? '✅' : '❌';
             html += `<tr><td>${escapeHtml(entry.id)}</td><td>${escapeHtml(entry.lotIdentifier)}</td><td>${new Date(entry.date).toLocaleString('uk-UA')}</td><td>${icon} ${entry.decision === 'accepted' ? 'Прийнято' : 'Відхилено'}</td><td>${entry.n}</td><td>${entry.defectsCritical}</td><td>${entry.defectsMajor}</td><td>${entry.defectsMinor}</td><td>${escapeHtml(entry.mode)}</td></tr>`;
         }
         html += '</tbody></table>';
-        container.innerHTML = html;
+        DOM.historyList.innerHTML = html;
     }
+    
     function updatePlanPreview() {
-        const N = parseInt(document.getElementById('lotSize').value);
-        const level = document.getElementById('inspectionLevel').value;
-        const planType = document.getElementById('planType').value;
-        const aqlC = document.getElementById('aqlCritical').value;
-        const aqlM = document.getElementById('aqlMajor').value;
-        const aqlMi = document.getElementById('aqlMinor').value;
+        const N = parseInt(DOM.lotSize.value);
+        const level = DOM.inspectionLevel.value;
+        const planType = DOM.planType.value;
+        const aqlC = DOM.aqlCritical.value;
+        const aqlM = DOM.aqlMajor.value;
+        const aqlMi = DOM.aqlMinor.value;
         if (isNaN(N) || N < 2) {
-            document.getElementById('planDetails').innerHTML = '<span style="color:red;">Обсяг партії має бути числом ≥ 2</span>';
+            DOM.planDetails.innerHTML = '<span style="color:red;">Обсяг партії має бути числом ≥ 2</span>';
             return;
         }
         const planC = getSamplingPlan(N, aqlC, level, currentMode, planType);
         const planM = getSamplingPlan(N, aqlM, level, currentMode, planType);
         const planMi = getSamplingPlan(N, aqlMi, level, currentMode, planType);
         if (!planC || !planM || !planMi) {
-            document.getElementById('planDetails').innerHTML = '<span style="color:red;">План не знайдено для заданих параметрів</span>';
+            DOM.planDetails.innerHTML = '<span style="color:red;">План не знайдено для заданих параметрів</span>';
             return;
         }
         let planStr = planType === 'single' ?
@@ -487,14 +605,14 @@
             `n₁ = <strong>${planM.n1}</strong>, n₂ = <strong>${planM.n2}</strong> (код ${planM.originalCode}${planM.arrow ? ' → ' + planM.code : ''})<br>Critical: Ac₁/Re₁ = ${planC.ac1}/${planC.re1}, Ac₂/Re₂ = ${planC.ac2}/${planC.re2}<br>Major: Ac₁/Re₁ = ${planM.ac1}/${planM.re1}, Ac₂/Re₂ = ${planM.ac2}/${planM.re2}<br>Minor: Ac₁/Re₁ = ${planMi.ac1}/${planMi.re1}, Ac₂/Re₂ = ${planMi.ac2}/${planMi.re2}`;
         let warning = '';
         if (currentPlans) warning = '<br><span style="color:#f59e0b;">⚠️ Параметри змінено. Для оновлення вибірки натисніть «Сформувати вибірку».</span>';
-        document.getElementById('planDetails').innerHTML = planStr + warning;
+        DOM.planDetails.innerHTML = planStr + warning;
     }
-
-    // Завантаження файлу партії
+    
+    // ----------------------------- 7. ЗАВАНТАЖЕННЯ ФАЙЛУ ПАРТІЇ -----------------------------
     document.getElementById('csvFile').addEventListener('change', (e) => {
         const file = e.target.files[0];
         if (!file) return;
-        document.getElementById('fileNameDisplay').textContent = file.name;
+        DOM.fileNameDisplay.textContent = file.name;
         const reader = new FileReader();
         reader.onload = function(evt) {
             try {
@@ -505,11 +623,11 @@
                 if (json.length < 2) { alert("Файл порожній або містить замало даних"); return; }
                 currentHeaders = json[0].map(h => String(h).trim());
                 allDataRows = json.slice(1).filter(row => row.some(cell => cell !== ""));
-                document.getElementById('lotSize').value = allDataRows.length;
-                document.getElementById('autoNote').innerHTML = `✅ Автоматично визначено: <strong>${allDataRows.length}</strong> одиниць`;
+                DOM.lotSize.value = allDataRows.length;
+                DOM.autoNote.innerHTML = `✅ Автоматично визначено: <strong>${allDataRows.length}</strong> одиниць`;
                 currentSampleData = null;
-                document.getElementById('sampleBody').innerHTML = '';
-                document.getElementById('verifyResult').innerHTML = '';
+                DOM.sampleBody.innerHTML = '';
+                DOM.verifyResult.innerHTML = '';
                 updatePlanPreview();
             } catch (err) {
                 console.error(err);
@@ -518,17 +636,13 @@
         };
         reader.readAsArrayBuffer(file);
     });
-
+    
     document.getElementById('verifyCsvFile').addEventListener('change', (e) => {
         const file = e.target.files[0];
-        const display = document.getElementById('verifyFileNameDisplay');
-        if (!file) {
-            display.textContent = 'Файл не вибрано';
-            return;
-        }
-        display.textContent = file.name;
+        DOM.verifyFileNameDisplay.textContent = file ? file.name : 'Файл не вибрано';
     });
-
+    
+    // ----------------------------- 8. ВЕРИФІКАЦІЯ -----------------------------
     function reproduceExactSample(params) {
         if (!params) return null;
         const { N, aqlMajor, level, mode, planType, seed, allDataRowsSaved, modColIndex } = params;
@@ -536,45 +650,18 @@
         if (!plan) return null;
         const sampleSize = planType === 'single' ? plan.n : plan.n1;
         if (allDataRowsSaved.length < sampleSize) return null;
-        let indices = [];
-        if (modColIndex !== -1 && allDataRowsSaved.length) {
-            const groups = {};
-            allDataRowsSaved.forEach((row, i) => {
-                let modVal = (row[modColIndex] || '').trim();
-                if (modVal === '') modVal = 'Невідомо';
-                if (!groups[modVal]) groups[modVal] = [];
-                groups[modVal].push(i);
-            });
-            const modNames = Object.keys(groups);
-            if (modNames.length > 1) {
-                modNames.forEach(name => {
-                    const grp = groups[name];
-                    const quota = Math.round((grp.length / allDataRowsSaved.length) * sampleSize);
-                    const shuf = fisherYates(grp, seed + name.length);
-                    indices.push(...shuf.slice(0, quota));
-                });
-                while (indices.length > sampleSize) indices.pop();
-                const usedSet = new Set(indices);
-                const rest = allDataRowsSaved.map((_, i) => i).filter(i => !usedSet.has(i));
-                while (indices.length < sampleSize && rest.length) indices.push(rest.shift());
-            } else {
-                indices = fisherYates([...Array(allDataRowsSaved.length).keys()], seed).slice(0, sampleSize);
-            }
-        } else {
-            indices = fisherYates([...Array(allDataRowsSaved.length).keys()], seed).slice(0, sampleSize);
-        }
+        const indices = getSampleIndices(allDataRowsSaved, sampleSize, seed, modColIndex);
         return indices.map(i => allDataRowsSaved[i]);
     }
-
+    
     async function verifySample() {
-        const verifyResultDiv = document.getElementById('verifyResult');
         if (!lastGenerationParams) {
-            verifyResultDiv.innerHTML = '❌ Спочатку сформуйте вибірку (кнопка "Сформувати вибірку").';
+            DOM.verifyResult.innerHTML = '❌ Спочатку сформуйте вибірку (кнопка "Сформувати вибірку").';
             return;
         }
         const file = document.getElementById('verifyCsvFile').files[0];
         if (!file) {
-            verifyResultDiv.innerHTML = '❌ Виберіть файл вибірки для перевірки.';
+            DOM.verifyResult.innerHTML = '❌ Виберіть файл вибірки для перевірки.';
             return;
         }
         try {
@@ -587,17 +674,17 @@
             const workbook = XLSX.read(data, { type: 'array' });
             const sheet = workbook.Sheets[workbook.SheetNames[0]];
             const json = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "", raw: false });
-            if (json.length < 2) { verifyResultDiv.innerHTML = '❌ Файл вибірки порожній.'; return; }
+            if (json.length < 2) { DOM.verifyResult.innerHTML = '❌ Файл вибірки порожній.'; return; }
             const uploadedRows = json.slice(1).filter(row => row.some(cell => cell !== ""));
             const reproduced = reproduceExactSample(lastGenerationParams);
-            if (!reproduced) { verifyResultDiv.innerHTML = '❌ Не вдалося відтворити вибірку (помилка логіки).'; return; }
+            if (!reproduced) { DOM.verifyResult.innerHTML = '❌ Не вдалося відтворити вибірку (помилка логіки).'; return; }
             const canonical = row => row.map(cell => String(cell).trim()).join('\x01');
             const expectedSet = new Set(reproduced.map(canonical));
             const uploadedSet = new Set(uploadedRows.map(canonical));
             const missing = [...expectedSet].filter(x => !uploadedSet.has(x));
             const extra = [...uploadedSet].filter(x => !expectedSet.has(x));
             if (missing.length === 0 && extra.length === 0) {
-                verifyResultDiv.innerHTML = '✅ <strong>Вибірку підтверджено!</strong> (повний збіг із seed-еталоном)';
+                DOM.verifyResult.innerHTML = '✅ <strong>Вибірку підтверджено!</strong> (повний збіг із seed-еталоном)';
             } else {
                 let msg = '<strong>❌ Невідповідність еталону</strong><br>';
                 if (missing.length) {
@@ -610,28 +697,27 @@
                     extra.slice(0, 5).forEach(e => msg += `&nbsp;&nbsp;${escapeHtml(e.replace(/\x01/g, ', '))}<br>`);
                     if (extra.length > 5) msg += `&nbsp;&nbsp;... ще ${extra.length - 5}<br>`;
                 }
-                verifyResultDiv.innerHTML = msg;
+                DOM.verifyResult.innerHTML = msg;
             }
         } catch (err) {
             console.error(err);
-            verifyResultDiv.innerHTML = `❌ Помилка обробки файлу: ${err.message}`;
+            DOM.verifyResult.innerHTML = `❌ Помилка обробки файлу: ${err.message}`;
         }
     }
-
-    // Сканер
+    
+    // ----------------------------- 9. СКАНЕР -----------------------------
     let html5QrcodeScanner = null;
     async function onScanSuccess(decodedText) {
-        const resultDiv = document.getElementById('verifyResult');
         const serialCol = findSerialColumnIndex(currentHeaders);
-        const found = currentSampleData.find(row => 
+        const found = currentSampleData?.find(row => 
             String(row[serialCol]).trim().toLowerCase() === decodedText.trim().toLowerCase()
         );
         if (found) {
             showToast(`✅ Знайдено: ${decodedText}`);
-            resultDiv.innerHTML = `<div style="color:#10b981; font-weight:700;">✅ Одиницю підтверджено: ${escapeHtml(decodedText)}</div>` + resultDiv.innerHTML;
+            DOM.verifyResult.innerHTML = `<div style="color:#10b981; font-weight:700;">✅ Одиницю підтверджено: ${escapeHtml(decodedText)}</div>` + DOM.verifyResult.innerHTML;
         } else {
             showToast(`❌ Відсутній: ${decodedText}`);
-            resultDiv.innerHTML = `<div style="color:#ef4444; font-weight:700;">❌ Одиниця не входить у вибірку: ${escapeHtml(decodedText)}</div>` + resultDiv.innerHTML;
+            DOM.verifyResult.innerHTML = `<div style="color:#ef4444; font-weight:700;">❌ Одиниця не входить у вибірку: ${escapeHtml(decodedText)}</div>` + DOM.verifyResult.innerHTML;
         }
     }
     document.getElementById('startScannerBtn').addEventListener('click', () => {
@@ -650,22 +736,22 @@
             });
         }
     });
-
-    // Генерація вибірки
+    
+    // ----------------------------- 10. ГЕНЕРАЦІЯ ВИБІРКИ -----------------------------
     async function generateSample() {
-        const N = parseInt(document.getElementById('lotSize').value);
+        const N = parseInt(DOM.lotSize.value);
         if (isNaN(N) || N < 2) { alert('Обсяг партії має бути цілим числом ≥ 2'); return; }
-        const level = document.getElementById('inspectionLevel').value;
-        const planType = document.getElementById('planType').value;
-        let seedInput = document.getElementById('seed').value.trim();
+        const level = DOM.inspectionLevel.value;
+        const planType = DOM.planType.value;
+        let seedInput = DOM.seed.value.trim();
         currentSeed = seedInput ? parseInt(seedInput) : Math.floor(Math.random() * 1000000000);
         secondSampleGenerated = false;
-        document.getElementById('stage2Inputs').style.display = 'none';
-        ['defectsCritical2','defectsMajor2','defectsMinor2'].forEach(id => document.getElementById(id).value = 0);
-        document.getElementById('decisionResult').innerHTML = '';
-        const aqlC = document.getElementById('aqlCritical').value;
-        const aqlM = document.getElementById('aqlMajor').value;
-        const aqlMi = document.getElementById('aqlMinor').value;
+        DOM.stage2Inputs.style.display = 'none';
+        [DOM.defectsCritical2, DOM.defectsMajor2, DOM.defectsMinor2].forEach(el => el.value = 0);
+        DOM.decisionResult.innerHTML = '';
+        const aqlC = DOM.aqlCritical.value;
+        const aqlM = DOM.aqlMajor.value;
+        const aqlMi = DOM.aqlMinor.value;
         const planC = getSamplingPlan(N, aqlC, level, currentMode, planType);
         const planM = getSamplingPlan(N, aqlM, level, currentMode, planType);
         const planMi = getSamplingPlan(N, aqlMi, level, currentMode, planType);
@@ -688,36 +774,9 @@
         const sampleSize = planType === 'single' ? planM.n : planM.n1;
         if (dataRows.length < sampleSize) return alert(`Недостатньо даних. Потрібно мінімум ${sampleSize}, є ${dataRows.length}`);
         
-        let firstIndices = [];
-        if (modCol !== -1 && dataRows.length) {
-            const groups = {};
-            dataRows.forEach((row, i) => {
-                let modVal = (row[modCol] || '').trim();
-                if (modVal === '') modVal = 'Невідомо';
-                if (!groups[modVal]) groups[modVal] = [];
-                groups[modVal].push(i);
-            });
-            const modNames = Object.keys(groups);
-            if (modNames.length > 1) {
-                modNames.forEach(name => {
-                    const grp = groups[name];
-                    const quota = Math.round((grp.length / dataRows.length) * sampleSize);
-                    const shuf = fisherYates(grp, currentSeed + name.length);
-                    firstIndices.push(...shuf.slice(0, quota));
-                });
-                while (firstIndices.length > sampleSize) firstIndices.pop();
-                const usedSet = new Set(firstIndices);
-                const rest = dataRows.map((_, i) => i).filter(i => !usedSet.has(i));
-                while (firstIndices.length < sampleSize && rest.length) firstIndices.push(rest.shift());
-            } else {
-                firstIndices = fisherYates([...Array(dataRows.length).keys()], currentSeed).slice(0, sampleSize);
-            }
-        } else {
-            firstIndices = fisherYates([...Array(dataRows.length).keys()], currentSeed).slice(0, sampleSize);
-        }
+        const firstIndices = getSampleIndices(dataRows, sampleSize, currentSeed, modCol);
         currentSampleData = firstIndices.map(i => dataRows[i]);
         
-        // Підготовка другої вибірки для подвійного плану (детерміновано)
         precomputedSecondIndices = null;
         if (planType === 'double') {
             const secondSize = planM.n2;
@@ -726,7 +785,6 @@
             precomputedSecondIndices = shuffledRemaining.slice(0, secondSize);
         }
         
-        remainingIndices = dataRows.map((_, i) => i).filter(i => !firstIndices.includes(i));
         modGroups = {};
         currentSampleData.forEach(row => {
             const serial = row[serialCol] || '';
@@ -743,25 +801,25 @@
         let planStr = planType === 'single' ?
             `n = <strong>${planM.n}</strong> (код ${planM.originalCode}${planM.arrow ? ' → ' + planM.code : ''})<br>Critical: Ac/Re = ${planC.ac}/${planC.re}<br>Major: Ac/Re = ${planM.ac}/${planM.re}<br>Minor: Ac/Re = ${planMi.ac}/${planMi.re}` :
             `n₁ = <strong>${planM.n1}</strong>, n₂ = <strong>${planM.n2}</strong> (код ${planM.originalCode}${planM.arrow ? ' → ' + planM.code : ''})<br>Critical: Ac₁/Re₁ = ${planC.ac1}/${planC.re1}, Ac₂/Re₂ = ${planC.ac2}/${planC.re2}<br>Major: Ac₁/Re₁ = ${planM.ac1}/${planM.re1}, Ac₂/Re₂ = ${planM.ac2}/${planM.re2}<br>Minor: Ac₁/Re₁ = ${planMi.ac1}/${planMi.re1}, Ac₂/Re₂ = ${planMi.ac2}/${planMi.re2}`;
-        document.getElementById('planDetails').innerHTML = `
+        DOM.planDetails.innerHTML = `
             Код: <strong>${planM.originalCode}${planM.arrow ? ' → ' + planM.code : ''}</strong> | ${planStr}<br>
             Рівень: ${level} | Режим: <strong>${currentMode.toUpperCase()}</strong><br>
             Метод відбору: <strong>${modCol !== -1 && Object.keys(modGroups).length > 1 ? 'стратифікований пропорційний' : 'Fisher‑Yates shuffle'}</strong> (seed ${currentSeed})
         `;
         renderSampleTable(currentSampleData, currentHeaders);
-        document.getElementById('sampleHeader').textContent = planType === 'single' ? `Вибірка (n = ${planM.n})` : `Перша вибірка (n₁ = ${planM.n1})`;
+        DOM.sampleHeader.textContent = planType === 'single' ? `Вибірка (n = ${planM.n})` : `Перша вибірка (n₁ = ${planM.n1})`;
         document.getElementById('planCard').classList.remove('hidden');
         document.getElementById('verifyCard').classList.remove('hidden');
         document.getElementById('decisionCard').classList.remove('hidden');
     }
-
-    // Аналіз дефектів
+    
+    // ----------------------------- 11. АНАЛІЗ ДЕФЕКТІВ -----------------------------
     document.getElementById('analyzeBtn').addEventListener('click', () => {
         if (!currentPlans) return alert('Спочатку сформуйте вибірку');
         const planType = currentPlans.major.type;
-        const dC = parseInt(document.getElementById('defectsCritical').value) || 0;
-        const dM = parseInt(document.getElementById('defectsMajor').value) || 0;
-        const dMi = parseInt(document.getElementById('defectsMinor').value) || 0;
+        const dC = parseInt(DOM.defectsCritical.value) || 0;
+        const dM = parseInt(DOM.defectsMajor.value) || 0;
+        const dMi = parseInt(DOM.defectsMinor.value) || 0;
         if (planType === 'double' && !secondSampleGenerated) {
             const needSecond = (dC > currentPlans.critical.ac1 && dC < currentPlans.critical.re1) ||
                 (dM > currentPlans.major.ac1 && dM < currentPlans.major.re1) ||
@@ -771,13 +829,13 @@
                     alert(`Недостатньо даних для другої вибірки. Потрібно ще ${currentPlans.major.n2} елементів.`);
                     return;
                 }
-                document.getElementById('stage2Inputs').style.display = 'block';
-                document.getElementById('decisionResult').innerHTML = '<strong>⚠️ Потрібна друга вибірка.</strong> Вкажіть дефекти у другій вибірці та натисніть "Аналізувати" знову.';
+                DOM.stage2Inputs.style.display = 'block';
+                DOM.decisionResult.innerHTML = '<strong>⚠️ Потрібна друга вибірка.</strong> Вкажіть дефекти у другій вибірці та натисніть "Аналізувати" знову.';
                 if (allDataRows.length > 0) {
                     const secondSample = precomputedSecondIndices.map(i => allDataRows[i]);
                     currentSampleData = [...currentSampleData, ...secondSample];
                     renderSampleTable(currentSampleData, currentHeaders);
-                    document.getElementById('sampleHeader').textContent = `Перша + друга вибірка (n₁=${currentPlans.major.n1}, n₂=${currentPlans.major.n2})`;
+                    DOM.sampleHeader.textContent = `Перша + друга вибірка (n₁=${currentPlans.major.n1}, n₂=${currentPlans.major.n2})`;
                 }
                 secondSampleGenerated = true;
                 return;
@@ -789,23 +847,21 @@
             if (dM >= currentPlans.major.re) { isRejected = true; reasons.push(`Значні: ${dM} ≥ Re=${currentPlans.major.re}`); }
             if (dMi >= currentPlans.minor.re) { isRejected = true; reasons.push(`Незначні: ${dMi} ≥ Re=${currentPlans.minor.re}`); }
         } else {
-            const dC2 = parseInt(document.getElementById('defectsCritical2').value) || 0;
-            const dM2 = parseInt(document.getElementById('defectsMajor2').value) || 0;
-            const dMi2 = parseInt(document.getElementById('defectsMinor2').value) || 0;
+            const dC2 = parseInt(DOM.defectsCritical2.value) || 0;
+            const dM2 = parseInt(DOM.defectsMajor2.value) || 0;
+            const dMi2 = parseInt(DOM.defectsMinor2.value) || 0;
             const totC = dC + dC2, totM = dM + dM2, totMi = dMi + dMi2;
-            // Critical
             if (dC >= currentPlans.critical.re1) { isRejected = true; reasons.push(`Критичні (перша вибірка): ${dC} ≥ Re₁=${currentPlans.critical.re1}`); }
             else if (totC >= currentPlans.critical.re2) { isRejected = true; reasons.push(`Критичні (сумарно): ${totC} ≥ Re₂=${currentPlans.critical.re2}`); }
             else if (totC <= currentPlans.critical.ac2) { /* прийнято */ }
             else { reasons.push(`Критичні (сумарно): ${totC} між Ac₂=${currentPlans.critical.ac2} та Re₂=${currentPlans.critical.re2} – відхилено`); isRejected = true; }
-            // Major
+            
             if (!isRejected) {
                 if (dM >= currentPlans.major.re1) { isRejected = true; reasons.push(`Значні (перша вибірка): ${dM} ≥ Re₁=${currentPlans.major.re1}`); }
                 else if (totM >= currentPlans.major.re2) { isRejected = true; reasons.push(`Значні (сумарно): ${totM} ≥ Re₂=${currentPlans.major.re2}`); }
                 else if (totM <= currentPlans.major.ac2) { /* прийнято */ }
                 else { reasons.push(`Значні (сумарно): ${totM} між Ac₂=${currentPlans.major.ac2} та Re₂=${currentPlans.major.re2} – відхилено`); isRejected = true; }
             }
-            // Minor
             if (!isRejected) {
                 if (dMi >= currentPlans.minor.re1) { isRejected = true; reasons.push(`Незначні (перша вибірка): ${dMi} ≥ Re₁=${currentPlans.minor.re1}`); }
                 else if (totMi >= currentPlans.minor.re2) { isRejected = true; reasons.push(`Незначні (сумарно): ${totMi} ≥ Re₂=${currentPlans.minor.re2}`); }
@@ -813,66 +869,66 @@
                 else { reasons.push(`Незначні (сумарно): ${totMi} між Ac₂=${currentPlans.minor.ac2} та Re₂=${currentPlans.minor.re2} – відхилено`); isRejected = true; }
             }
         }
-        const resultDiv = document.getElementById('decisionResult');
         if (isRejected) {
-            resultDiv.innerHTML = `<strong style="color:#ef4444;">❌ ПАРТІЮ ВІДХИЛЕНО</strong><br>${reasons.join('<br>')}
+            DOM.decisionResult.innerHTML = `<strong style="color:#ef4444;">❌ ПАРТІЮ ВІДХИЛЕНО</strong><br>${reasons.join('<br>')}
                 <div class="operator-buttons"><button id="confirmRejectBtn" class="danger">Підтвердити відхилення</button></div>`;
         } else {
-            resultDiv.innerHTML = `<strong style="color:#10b981;">✅ ПАРТІЮ МОЖНА ПРИЙНЯТИ</strong><br>Дефекти в межах допустимих значень.
+            DOM.decisionResult.innerHTML = `<strong style="color:#10b981;">✅ ПАРТІЮ МОЖНА ПРИЙНЯТИ</strong><br>Дефекти в межах допустимих значень.
                 <div class="operator-buttons"><button id="acceptLotBtn" class="success">✅ Прийняти партію</button>
                 <button id="rejectLotBtn" class="danger">❌ Відхилити партію</button></div>`;
         }
     });
+    
     document.getElementById('decisionResult').addEventListener('click', function(e) {
         if (!e.target.matches('button')) return;
         const btn = e.target;
-        const dC = parseInt(document.getElementById('defectsCritical').value) || 0;
-        const dM = parseInt(document.getElementById('defectsMajor').value) || 0;
-        const dMi = parseInt(document.getElementById('defectsMinor').value) || 0;
+        const dC = parseInt(DOM.defectsCritical.value) || 0;
+        const dM = parseInt(DOM.defectsMajor.value) || 0;
+        const dMi = parseInt(DOM.defectsMinor.value) || 0;
         if (btn.id === 'confirmRejectBtn') {
             addToHistory(currentPlans.major, dC, dM, dMi, 'rejected', currentPlans.major.type);
-            document.getElementById('decisionResult').innerHTML = '<strong style="color:#ef4444;">❌ Партію відхилено.</strong>';
+            DOM.decisionResult.innerHTML = '<strong style="color:#ef4444;">❌ Партію відхилено.</strong>';
         } else if (btn.id === 'acceptLotBtn') {
             addToHistory(currentPlans.major, dC, dM, dMi, 'accepted', currentPlans.major.type);
-            document.getElementById('decisionResult').innerHTML = '<strong style="color:#10b981;">✅ Партію прийнято.</strong>';
+            DOM.decisionResult.innerHTML = '<strong style="color:#10b981;">✅ Партію прийнято.</strong>';
         } else if (btn.id === 'rejectLotBtn') {
             addToHistory(currentPlans.major, dC, dM, dMi, 'rejected', currentPlans.major.type);
-            document.getElementById('decisionResult').innerHTML = '<strong style="color:#ef4444;">❌ Партію відхилено.</strong>';
+            DOM.decisionResult.innerHTML = '<strong style="color:#ef4444;">❌ Партію відхилено.</strong>';
         }
     });
-
-    // Акт відбору (виправлена версія з правильними тегами)
+    
+    // ----------------------------- 12. АКТ ВІДБОРУ -----------------------------
     function buildActHTML() {
-        const number = document.getElementById('actNumber').value.trim();
-        const dateRaw = document.getElementById('actDate').value;
+        const number = DOM.actNumber.value.trim();
+        const dateRaw = DOM.actDate.value;
         const actDate = (dateRaw ? new Date(dateRaw) : new Date()).toLocaleDateString('uk-UA', { day:'numeric', month:'long', year:'numeric' }).replace(' р.', '');
-        const decisionDateRaw = document.getElementById('decisionDate').value;
+        const decisionDateRaw = DOM.decisionDate.value;
         const decisionDate = decisionDateRaw ? new Date(decisionDateRaw).toLocaleDateString('uk-UA', { day:'numeric', month:'long', year:'numeric' }).replace(' р.', '') : '';
-        const decisionNumber = document.getElementById('decisionNumber').value.trim();
-        const company = document.getElementById('actCompany').value.trim();
-        const address = document.getElementById('actAddress').value.trim();
-        const inspector = document.getElementById('actInspector').value.trim();
-        const inspectorPos = document.getElementById('actInspectorPos').value.trim();
-        const applicant = document.getElementById('actApplicant').value.trim();
-        const applicantPos = document.getElementById('actApplicantPos').value.trim();
-        const signOov = document.getElementById('signatoryOov').value.trim() || inspector;
-        const signApp = document.getElementById('signatoryApplicant').value.trim() || applicant;
-        const deviceType = document.getElementById('actDeviceType').value.trim();
-        const modificationField = document.getElementById('actModification').value.trim();
-        const testLocation = document.getElementById('actTestLocation').value.trim();
-        const lotSize = document.getElementById('lotSize').value;
+        const decisionNumber = DOM.decisionNumber.value.trim();
+        const company = DOM.actCompany.value.trim();
+        const address = DOM.actAddress.value.trim();
+        const inspector = DOM.actInspector.value.trim();
+        const inspectorPos = DOM.actInspectorPos.value.trim();
+        const applicant = DOM.actApplicant.value.trim();
+        const applicantPos = DOM.actApplicantPos.value.trim();
+        const signOov = DOM.signatoryOov.value.trim() || inspector;
+        const signApp = DOM.signatoryApplicant.value.trim() || applicant;
+        const deviceType = DOM.actDeviceType.value.trim();
+        const modificationField = DOM.actModification.value.trim();
+        const testLocation = DOM.actTestLocation.value.trim();
+        const lotSize = DOM.lotSize.value;
         const sampleCount = currentSampleData ? currentSampleData.length : 0;
         
         let modTableHtml = '';
         if (modGroups && Object.keys(modGroups).length > 0) {
             modTableHtml = `<tr><th>Модифікація</th><th>Заводські номери</th><th style="width:15%;">Кількість</th></tr>`;
             for (let [mod, serials] of Object.entries(modGroups)) {
-                modTableHtml += `<tr><td>${escapeHtml(mod)}</td><td>${escapeHtml(serials.join(', '))}<td>${serials.length}</td></tr>`;
+                modTableHtml += `<tr><td>${escapeHtml(mod)}</td><td>${escapeHtml(serials.join(', '))}</td><td>${serials.length}</td></tr>`;
             }
             modTableHtml = `<table>${modTableHtml}</table>`;
         } else {
             const serialCol = findSerialColumnIndex(currentHeaders);
-            const allSerials = currentSampleData ? currentSampleData.map(row => row[serialCol] || '').filter(s => s).join(', ') : '';
+            const allSerials = currentSampleData?.map(row => row[serialCol] || '').filter(s => s).join(', ') || '';
             modTableHtml = `<p><strong>Заводські номери:</strong> ${escapeHtml(allSerials)}</p>`;
         }
         
@@ -927,13 +983,14 @@
     </div>
     </body></html>`;
     }
-
+    
     document.getElementById('generateActBtn').addEventListener('click', () => {
         if (!currentSampleData || !currentPlans) return alert('Спочатку сформуйте вибірку.');
         const win = window.open('', '_blank', 'width=900,height=700');
         win.document.write(buildActHTML());
         win.document.close();
     });
+    
     document.getElementById('pdfBtn').addEventListener('click', () => {
         if (history.length === 0) return alert('Немає записів для звіту');
         const last = history[history.length - 1];
@@ -950,87 +1007,94 @@
         doc.text(`Decision: ${last.decision.toUpperCase()}`, 20, 78);
         doc.save(`inspection_${last.id}.pdf`);
     });
-
+    
     function fillActDefaults() { 
         const today = new Date().toISOString().slice(0,10);
-        document.getElementById('actDate').value = today;
-        document.getElementById('decisionDate').value = today;
+        DOM.actDate.value = today;
+        DOM.decisionDate.value = today;
     }
+    
     (function setDefaultSeed() {
         const now = new Date();
-        document.getElementById('seed').value = `${String(now.getDate()).padStart(2,'0')}${String(now.getMonth()+1).padStart(2,'0')}${now.getFullYear()}${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}`;
+        DOM.seed.value = `${String(now.getDate()).padStart(2,'0')}${String(now.getMonth()+1).padStart(2,'0')}${now.getFullYear()}${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}`;
     })();
+    
     fillActDefaults();
     loadHistory();
     updateModeDisplay();
     renderHistory();
     updatePlanPreview();
-
+    
+    // ----------------------------- 13. ПІДПИСКИ НА ПОДІЇ -----------------------------
     document.getElementById('generateBtn').addEventListener('click', generateSample);
     document.getElementById('copySeedBtn').addEventListener('click', () => {
-        const seedInput = document.getElementById('seed');
-        seedInput.select();
+        DOM.seed.select();
         document.execCommand('copy');
         showToast('Seed скопійовано');
     });
+    
     const autoUpdateFields = ['lotSize', 'inspectionLevel', 'planType', 'aqlCritical', 'aqlMajor', 'aqlMinor'];
     autoUpdateFields.forEach(id => {
         const el = document.getElementById(id);
         if (el) el.addEventListener('change', updatePlanPreview);
     });
+    
     document.getElementById('verifyBtn').addEventListener('click', verifySample);
     document.getElementById('downloadCsvRandomBtn').addEventListener('click', () => exportToCSV(false));
     document.getElementById('downloadCsvSortedBtn').addEventListener('click', () => exportToCSV(true));
     document.getElementById('downloadExcelRandomBtn').addEventListener('click', () => exportToExcel(false));
     document.getElementById('downloadExcelSortedBtn').addEventListener('click', () => exportToExcel(true));
+    
     document.getElementById('actLogo').addEventListener('change', function(e) {
         const file = e.target.files[0];
-        if (!file) { actLogoDataUrl = null; document.getElementById('actLogoPreview').innerHTML = ''; return; }
+        if (!file) { actLogoDataUrl = null; DOM.actLogoPreview.innerHTML = ''; return; }
         const reader = new FileReader();
-        reader.onload = ev => { actLogoDataUrl = ev.target.result; document.getElementById('actLogoPreview').innerHTML = `<img src="${ev.target.result}" style="max-height:60px;">`; };
+        reader.onload = ev => { actLogoDataUrl = ev.target.result; DOM.actLogoPreview.innerHTML = `<img src="${ev.target.result}" style="max-height:60px;">`; };
         reader.readAsDataURL(file);
     });
+    
     document.getElementById('clearFormBtn').addEventListener('click', () => {
-        document.getElementById('lotIdentifier').value = '25/3/F/41/';
-        document.getElementById('lotSize').value = '500';
-        document.getElementById('aqlCritical').value = '0.65';
-        document.getElementById('aqlMajor').value = '1.0';
-        document.getElementById('aqlMinor').value = '2.5';
-        document.getElementById('inspectionLevel').value = 'II';
-        document.getElementById('planType').value = 'single';
+        DOM.lotIdentifier.value = '25/3/F/41/';
+        DOM.lotSize.value = '500';
+        DOM.aqlCritical.value = '0.65';
+        DOM.aqlMajor.value = '1.0';
+        DOM.aqlMinor.value = '2.5';
+        DOM.inspectionLevel.value = 'II';
+        DOM.planType.value = 'single';
         const now = new Date();
-        document.getElementById('seed').value = `${String(now.getDate()).padStart(2,'0')}${String(now.getMonth()+1).padStart(2,'0')}${now.getFullYear()}${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}`;
+        DOM.seed.value = `${String(now.getDate()).padStart(2,'0')}${String(now.getMonth()+1).padStart(2,'0')}${now.getFullYear()}${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}`;
         document.getElementById('csvFile').value = '';
-        document.getElementById('fileNameDisplay').textContent = 'Файл не вибрано';
-        document.getElementById('autoNote').innerHTML = 'Після вибору файлу обсяг партії визначиться автоматично';
+        DOM.fileNameDisplay.textContent = 'Файл не вибрано';
+        DOM.autoNote.innerHTML = 'Після вибору файлу обсяг партії визначиться автоматично';
         document.getElementById('planCard').classList.add('hidden');
         document.getElementById('verifyCard').classList.add('hidden');
         document.getElementById('decisionCard').classList.add('hidden');
         currentSampleData = null; currentHeaders = []; currentPlans = null; currentSeed = null;
-        allDataRows = []; remainingIndices = []; secondSampleGenerated = false; modGroups = null;
+        allDataRows = []; secondSampleGenerated = false; modGroups = null;
         precomputedSecondIndices = null; lastGenerationParams = null;
-        ['defectsCritical','defectsMajor','defectsMinor','defectsCritical2','defectsMajor2','defectsMinor2'].forEach(id => document.getElementById(id).value = 0);
-        document.getElementById('stage2Inputs').style.display = 'none';
-        document.getElementById('decisionResult').innerHTML = '';
-        document.getElementById('sampleBody').innerHTML = '';
-        document.getElementById('verifyResult').innerHTML = '';
+        [DOM.defectsCritical, DOM.defectsMajor, DOM.defectsMinor, DOM.defectsCritical2, DOM.defectsMajor2, DOM.defectsMinor2].forEach(el => el.value = 0);
+        DOM.stage2Inputs.style.display = 'none';
+        DOM.decisionResult.innerHTML = '';
+        DOM.sampleBody.innerHTML = '';
+        DOM.verifyResult.innerHTML = '';
         document.getElementById('verifyCsvFile').value = '';
-        document.getElementById('verifyFileNameDisplay').textContent = 'Файл не вибрано';
+        DOM.verifyFileNameDisplay.textContent = 'Файл не вибрано';
         actLogoDataUrl = null;
         document.getElementById('actLogo').value = '';
-        document.getElementById('actLogoPreview').innerHTML = '';
-        document.getElementById('decisionDate').value = '';
-        document.getElementById('decisionNumber').value = '';
-        document.getElementById('signatoryOov').value = '';
-        document.getElementById('signatoryApplicant').value = '';
+        DOM.actLogoPreview.innerHTML = '';
+        DOM.decisionDate.value = '';
+        DOM.decisionNumber.value = '';
+        DOM.signatoryOov.value = '';
+        DOM.signatoryApplicant.value = '';
         fillActDefaults();
         updatePlanPreview();
     });
+    
     document.getElementById('clearHistoryBtn').addEventListener('click', () => {
         if (confirm('Очистити всю історію?')) { history = []; saveHistory(); currentMode = 'normal'; updateModeDisplay(); renderHistory(); }
     });
-
-    // PWA (проста реєстрація)
+    
+    // ----------------------------- 14. PWA (проста реєстрація) -----------------------------
     function setupPWA() {
         const manifest = {
             name: "ISO 2859-1 PRO Контроль",
