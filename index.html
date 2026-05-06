@@ -59,6 +59,8 @@
         .format-row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
         .format-row label { margin: 0; flex: 1; font-weight: normal; }
         .format-row input { width: auto; flex: 1; }
+        .warning { color: #d97706; background: #fef3c7; border-left: 4px solid #f59e0b; padding: 8px 12px; margin: 8px 0; border-radius: 8px; }
+        .error { color: #dc2626; background: #fee2e2; border-left: 4px solid #ef4444; padding: 8px 12px; margin: 8px 0; border-radius: 8px; }
     </style>
 </head>
 <body>
@@ -188,6 +190,11 @@
 
     <div class="card" id="actParamsCard">
         <h3>📝 Параметри акту відбору</h3>
+        <div class="flex-row" style="margin-bottom: 16px;">
+            <button id="exportActSettingsBtn" class="secondary">💾 Експортувати налаштування</button>
+            <button id="importActSettingsBtn" class="secondary">📂 Імпортувати налаштування</button>
+            <input type="file" id="importActFile" accept=".json" style="display: none;">
+        </div>
         <div class="act-form">
             <label>Логотип</label>
             <input type="file" id="actLogo" accept="image/*">
@@ -392,6 +399,30 @@
         DOM.sampleBody.appendChild(table);
     }
     
+    // Перевірка унікальності серійних номерів
+    function checkUniqueSerialNumbers(headers, dataRows) {
+        const serialIndex = findSerialColumnIndex(headers);
+        if (serialIndex === -1 || serialIndex >= headers.length) {
+            return { isUnique: true, duplicates: [], message: "Колонку серійних номерів не знайдено" };
+        }
+        const seen = new Map();
+        const duplicates = [];
+        for (let i = 0; i < dataRows.length; i++) {
+            const serial = dataRows[i][serialIndex]?.toString().trim() || '';
+            if (serial === '') continue;
+            if (seen.has(serial)) {
+                duplicates.push({ serial, rowIndex: i + 2, firstRow: seen.get(serial) });
+            } else {
+                seen.set(serial, i + 2);
+            }
+        }
+        if (duplicates.length > 0) {
+            const dupList = duplicates.map(d => `${d.serial} (рядки ${d.firstRow} та ${d.rowIndex})`).join(', ');
+            return { isUnique: false, duplicates, message: `Знайдено дублікати серійних номерів: ${dupList}` };
+        }
+        return { isUnique: true, duplicates: [], message: "Усі серійні номери унікальні" };
+    }
+    
     function getCodeLetter(N, level = 'II') {
         let base = 'Q';
         for (let [low, high, code] of CODE_TABLE) if (N >= low && N <= high) { base = code; break; }
@@ -477,7 +508,7 @@
     function findSerialColumnIndex(headers) {
         const keywords = ['серій', 'serial', 'заводський', 'номер', 's/n'];
         for (let i = 0; i < headers.length; i++) if (keywords.some(kw => headers[i].toLowerCase().includes(kw))) return i;
-        return 1;
+        return -1;
     }
     
     function findModificationColumnIndex(headers) {
@@ -555,7 +586,71 @@
         DOM.testTrimResult.innerHTML = `Оригінал: "${escapeHtml(raw)}"<br>Після обрізки: "${escapeHtml(trimmed)}"`;
     }
     
-    // ----------------------------- 5. ГЛОБАЛЬНІ ЗМІННІ -----------------------------
+    // ----------------------------- 5. ЕКСПОРТ/ІМПОРТ НАЛАШТУВАНЬ АКТУ -----------------------------
+    function exportActSettings() {
+        const settings = {
+            version: "1.0",
+            actNumber: DOM.actNumber.value,
+            actDate: DOM.actDate.value,
+            decisionDate: DOM.decisionDate.value,
+            decisionNumber: DOM.decisionNumber.value,
+            actDeviceName: DOM.actDeviceName.value,
+            actDeviceType: DOM.actDeviceType.value,
+            actModification: DOM.actModification.value,
+            actCompany: DOM.actCompany.value,
+            actAddress: DOM.actAddress.value,
+            actInspector: DOM.actInspector.value,
+            actInspectorPos: DOM.actInspectorPos.value,
+            actApplicant: DOM.actApplicant.value,
+            actApplicantPos: DOM.actApplicantPos.value,
+            signatoryOov: DOM.signatoryOov.value,
+            signatoryApplicant: DOM.signatoryApplicant.value,
+            actTestLocation: DOM.actTestLocation.value,
+            logoDataUrl: actLogoDataUrl || null
+        };
+        const jsonStr = JSON.stringify(settings, null, 2);
+        downloadBlob(jsonStr, 'act_settings.json', 'application/json');
+        showToast('Налаштування експортовано');
+    }
+    
+    function importActSettings(file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const settings = JSON.parse(e.target.result);
+                if (settings.version) {
+                    DOM.actNumber.value = settings.actNumber || '';
+                    DOM.actDate.value = settings.actDate || '';
+                    DOM.decisionDate.value = settings.decisionDate || '';
+                    DOM.decisionNumber.value = settings.decisionNumber || '';
+                    DOM.actDeviceName.value = settings.actDeviceName || '';
+                    DOM.actDeviceType.value = settings.actDeviceType || '';
+                    DOM.actModification.value = settings.actModification || '';
+                    DOM.actCompany.value = settings.actCompany || '';
+                    DOM.actAddress.value = settings.actAddress || '';
+                    DOM.actInspector.value = settings.actInspector || '';
+                    DOM.actInspectorPos.value = settings.actInspectorPos || '';
+                    DOM.actApplicant.value = settings.actApplicant || '';
+                    DOM.actApplicantPos.value = settings.actApplicantPos || '';
+                    DOM.signatoryOov.value = settings.signatoryOov || '';
+                    DOM.signatoryApplicant.value = settings.signatoryApplicant || '';
+                    DOM.actTestLocation.value = settings.actTestLocation || '';
+                    if (settings.logoDataUrl) {
+                        actLogoDataUrl = settings.logoDataUrl;
+                        DOM.actLogoPreview.innerHTML = `<img src="${actLogoDataUrl}" style="max-height:60px;">`;
+                    }
+                    showToast('Налаштування імпортовано');
+                } else {
+                    showToast('Невірний формат файлу');
+                }
+            } catch (err) {
+                showToast('Помилка читання файлу: ' + err.message);
+            }
+        };
+        reader.readAsText(file);
+    }
+    
+    // ----------------------------- 6. ГЛОБАЛЬНІ ЗМІННІ -----------------------------
     let history = [];
     let currentMode = 'normal';
     let currentSampleData = null, currentHeaders = [], currentPlans = null, currentSeed = null;
@@ -564,7 +659,7 @@
     let modGroups = null, actLogoDataUrl = null;
     let lastGenerationParams = null;
     
-    // ----------------------------- 6. ІСТОРІЯ -----------------------------
+    // ----------------------------- 7. ІСТОРІЯ -----------------------------
     function loadHistory() {
         try {
             const stored = localStorage.getItem('iso2859v2_history');
@@ -630,7 +725,7 @@
             const icon = entry.decision === 'accepted' ? '✅' : '❌';
             html += `<tr><td>${escapeHtml(entry.id)}</td><td>${escapeHtml(entry.lotIdentifier)}</td><td>${new Date(entry.date).toLocaleString('uk-UA')}</td><td>${icon} ${entry.decision === 'accepted' ? 'Прийнято' : 'Відхилено'}</td><td>${entry.n}</td><td>${entry.defectsCritical}</td><td>${entry.defectsMajor}</td><td>${entry.defectsMinor}</td><td>${escapeHtml(entry.mode)}</td></tr>`;
         }
-        html += '</tbody></table>';
+        html += '</tbody><tr>';
         DOM.historyList.innerHTML = html;
     }
     
@@ -660,7 +755,7 @@
         DOM.planDetails.innerHTML = planStr + warning;
     }
     
-    // ----------------------------- 7. ЗАВАНТАЖЕННЯ ФАЙЛУ ПАРТІЇ -----------------------------
+    // ----------------------------- 8. ЗАВАНТАЖЕННЯ ФАЙЛУ ПАРТІЇ -----------------------------
     document.getElementById('csvFile').addEventListener('change', (e) => {
         const file = e.target.files[0];
         if (!file) return;
@@ -676,7 +771,16 @@
                 currentHeaders = json[0].map(h => String(h).trim());
                 allDataRows = json.slice(1).filter(row => row.some(cell => cell !== ""));
                 DOM.lotSize.value = allDataRows.length;
-                DOM.autoNote.innerHTML = `✅ Автоматично визначено: <strong>${allDataRows.length}</strong> одиниць`;
+                
+                const uniqueCheck = checkUniqueSerialNumbers(currentHeaders, allDataRows);
+                if (!uniqueCheck.isUnique) {
+                    DOM.autoNote.innerHTML = `⚠️ Увага! ${uniqueCheck.message}<br>Рекомендується виправити дублікати перед формуванням вибірки.`;
+                    DOM.autoNote.style.color = '#d97706';
+                } else {
+                    DOM.autoNote.innerHTML = `✅ Автоматично визначено: <strong>${allDataRows.length}</strong> одиниць. ${uniqueCheck.message}`;
+                    DOM.autoNote.style.color = '#64748b';
+                }
+                
                 currentSampleData = null;
                 DOM.sampleBody.innerHTML = '';
                 DOM.verifyResult.innerHTML = '';
@@ -694,7 +798,7 @@
         DOM.verifyFileNameDisplay.textContent = file ? file.name : 'Файл не вибрано';
     });
     
-    // ----------------------------- 8. ВЕРИФІКАЦІЯ -----------------------------
+    // ----------------------------- 9. ВЕРИФІКАЦІЯ -----------------------------
     function reproduceExactSample(params) {
         if (!params) return null;
         const { N, aqlMajor, level, mode, planType, seed, allDataRowsSaved, modColIndex } = params;
@@ -727,7 +831,15 @@
             const sheet = workbook.Sheets[workbook.SheetNames[0]];
             const json = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "", raw: false });
             if (json.length < 2) { DOM.verifyResult.innerHTML = '❌ Файл вибірки порожній.'; return; }
+            const uploadedHeaders = json[0].map(h => String(h).trim());
             const uploadedRows = json.slice(1).filter(row => row.some(cell => cell !== ""));
+            
+            const uniqueCheck = checkUniqueSerialNumbers(uploadedHeaders, uploadedRows);
+            let uniquenessMsg = '';
+            if (!uniqueCheck.isUnique) {
+                uniquenessMsg = `<div class="warning">⚠️ Попередження: ${uniqueCheck.message}</div>`;
+            }
+            
             const reproduced = reproduceExactSample(lastGenerationParams);
             if (!reproduced) { DOM.verifyResult.innerHTML = '❌ Не вдалося відтворити вибірку (помилка логіки).'; return; }
             const canonical = row => row.map(cell => String(cell).trim()).join('\x01');
@@ -736,18 +848,20 @@
             const missing = [...expectedSet].filter(x => !uploadedSet.has(x));
             const extra = [...uploadedSet].filter(x => !expectedSet.has(x));
             if (missing.length === 0 && extra.length === 0) {
-                DOM.verifyResult.innerHTML = '✅ <strong>Вибірку підтверджено!</strong> (повний збіг із seed-еталоном)';
+                DOM.verifyResult.innerHTML = uniquenessMsg + '<div style="color:#10b981; font-weight:700;">✅ Вибірку підтверджено!</div> (повний збіг із seed-еталоном)';
             } else {
-                let msg = '<strong>❌ Невідповідність еталону</strong><br>';
+                let msg = uniquenessMsg + '<div class="error"><strong>❌ Невідповідність еталону</strong></div>';
                 if (missing.length) {
-                    msg += `Відсутні в завантаженому файлі (${missing.length}):<br>`;
+                    msg += `<div>Відсутні в завантаженому файлі (${missing.length}):<br>`;
                     missing.slice(0, 5).forEach(m => msg += `&nbsp;&nbsp;${escapeHtml(m.replace(/\x01/g, ', '))}<br>`);
                     if (missing.length > 5) msg += `&nbsp;&nbsp;... ще ${missing.length - 5}<br>`;
+                    msg += '</div>';
                 }
                 if (extra.length) {
-                    msg += `Зайві в завантаженому файлі (${extra.length}):<br>`;
+                    msg += `<div>Зайві в завантаженому файлі (${extra.length}):<br>`;
                     extra.slice(0, 5).forEach(e => msg += `&nbsp;&nbsp;${escapeHtml(e.replace(/\x01/g, ', '))}<br>`);
                     if (extra.length > 5) msg += `&nbsp;&nbsp;... ще ${extra.length - 5}<br>`;
+                    msg += '</div>';
                 }
                 DOM.verifyResult.innerHTML = msg;
             }
@@ -757,7 +871,7 @@
         }
     }
     
-    // ----------------------------- 9. СКАНЕР З ОБРІЗКОЮ ТА ТАЙМАУТОМ -----------------------------
+    // ----------------------------- 10. СКАНЕР З ОБРІЗКОЮ ТА ТАЙМАУТОМ -----------------------------
     let html5QrcodeScanner = null;
     let lastScanTime = 0;
     const SCAN_COOLDOWN_MS = 2000;
@@ -776,6 +890,10 @@
             return;
         }
         const serialCol = findSerialColumnIndex(currentHeaders);
+        if (serialCol === -1) {
+            showToast("Помилка: не знайдено колонку серійних номерів у вибірці");
+            return;
+        }
         const found = currentSampleData?.find(row => 
             String(row[serialCol]).trim().toLowerCase() === trimmed.toLowerCase()
         );
@@ -805,7 +923,7 @@
         }
     });
     
-    // ----------------------------- 10. ГЕНЕРАЦІЯ ВИБІРКИ -----------------------------
+    // ----------------------------- 11. ГЕНЕРАЦІЯ ВИБІРКИ -----------------------------
     async function generateSample() {
         const N = parseInt(DOM.lotSize.value);
         if (isNaN(N) || N < 2) { alert('Обсяг партії має бути цілим числом ≥ 2'); return; }
@@ -845,6 +963,15 @@
         const firstIndices = getSampleIndices(dataRows, sampleSize, currentSeed, modCol);
         currentSampleData = firstIndices.map(i => dataRows[i]);
         
+        if (serialCol !== -1) {
+            const sampleSerials = currentSampleData.map(row => row[serialCol]?.toString().trim()).filter(s => s);
+            const uniqueSerials = new Set(sampleSerials);
+            if (uniqueSerials.size !== sampleSerials.length) {
+                console.warn('Увага: у згенерованій вибірці є дублікати серійних номерів!');
+                showToast('⚠️ Увага: вибірка містить дублікати серійних номерів!');
+            }
+        }
+        
         precomputedSecondIndices = null;
         if (planType === 'double') {
             const secondSize = planM.n2;
@@ -881,7 +1008,7 @@
         document.getElementById('decisionCard').classList.remove('hidden');
     }
     
-    // ----------------------------- 11. АНАЛІЗ ДЕФЕКТІВ -----------------------------
+    // ----------------------------- 12. АНАЛІЗ ДЕФЕКТІВ -----------------------------
     document.getElementById('analyzeBtn').addEventListener('click', () => {
         if (!currentPlans) return alert('Спочатку сформуйте вибірку');
         const planType = currentPlans.major.type;
@@ -965,7 +1092,7 @@
         }
     });
     
-    // ----------------------------- 12. АКТ ВІДБОРУ (ВИПРАВЛЕНИЙ: ПІДПИСИ В КІНЦІ) -----------------------------
+    // ----------------------------- 13. АКТ ВІДБОРУ -----------------------------
     function buildActHTML() {
         const number = DOM.actNumber.value.trim();
         const dateRaw = DOM.actDate.value;
@@ -1038,7 +1165,7 @@
     <p><strong>Метод відбору згідно процедури ПР-3.10/33-02.3:</strong> використовуючи Додаток А ДСТУ ISO 24153:2014 (з застосуванням стратифікованого випадкового відбору, якщо партія складається з декількох модифікацій/виконань в межах одного затвердженого типу ЗВТ) та таблиці вибіркового контролю згідно з ДСТУ ISO 2859-1:2014<br>Seed: ${currentSeed ?? '—'}</p>
     <table>
         <tr><th>Назва ЗВТ: </th><td>${escapeHtml(deviceName)}</td></tr>
-        <tr><th>Тип ЗВТ: </th><td>${escapeHtml(deviceType)}</td></tr>
+        <tr><th>Тип ЗВТ: </th><td>${escapeHtml(deviceType)}</td></table>
         <tr><th>Версія ПЗ: </th><td>${escapeHtml(modificationField)}</td></tr>
         <tr><th>Розмір партії (шт.): </th><td>${escapeHtml(lotSize)}</td></tr>
         <tr><th>Кількість відібраних зразків (шт.): </th><td>${escapeHtml(sampleCount)}</td></tr>
@@ -1096,7 +1223,7 @@
     renderHistory();
     updatePlanPreview();
     
-    // ----------------------------- 13. ПІДПИСКИ НА ПОДІЇ -----------------------------
+    // ----------------------------- 14. ПІДПИСКИ НА ПОДІЇ -----------------------------
     document.getElementById('generateBtn').addEventListener('click', generateSample);
     document.getElementById('copySeedBtn').addEventListener('click', () => {
         DOM.seed.select();
@@ -1124,6 +1251,18 @@
         reader.readAsDataURL(file);
     });
     
+    // Експорт/імпорт налаштувань акту
+    document.getElementById('exportActSettingsBtn').addEventListener('click', exportActSettings);
+    document.getElementById('importActSettingsBtn').addEventListener('click', () => {
+        document.getElementById('importActFile').click();
+    });
+    document.getElementById('importActFile').addEventListener('change', (e) => {
+        if (e.target.files.length > 0) {
+            importActSettings(e.target.files[0]);
+            e.target.value = '';
+        }
+    });
+    
     document.getElementById('clearFormBtn').addEventListener('click', () => {
         DOM.lotIdentifier.value = '25/3/F/41/';
         DOM.lotSize.value = '500';
@@ -1137,6 +1276,7 @@
         document.getElementById('csvFile').value = '';
         DOM.fileNameDisplay.textContent = 'Файл не вибрано';
         DOM.autoNote.innerHTML = 'Після вибору файлу обсяг партії визначиться автоматично';
+        DOM.autoNote.style.color = '#64748b';
         document.getElementById('planCard').classList.add('hidden');
         document.getElementById('verifyCard').classList.add('hidden');
         document.getElementById('decisionCard').classList.add('hidden');
@@ -1168,7 +1308,7 @@
     document.getElementById('testTrimBtn').addEventListener('click', testTrim);
     document.getElementById('saveTrimBtn').addEventListener('click', saveTrimSettings);
     
-    // ----------------------------- 14. PWA (проста реєстрація) -----------------------------
+    // ----------------------------- 15. PWA (проста реєстрація) -----------------------------
     function setupPWA() {
         const manifest = {
             name: "ISO 2859-1 PRO Контроль",
