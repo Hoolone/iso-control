@@ -760,7 +760,7 @@
     // ----------------------------- 9. СКАНЕР З ОБРІЗКОЮ ТА ТАЙМАУТОМ -----------------------------
     let html5QrcodeScanner = null;
     let lastScanTime = 0;
-    const SCAN_COOLDOWN_MS = 2000; // 2 секунди
+    const SCAN_COOLDOWN_MS = 2000;
 
     async function onScanSuccess(decodedText) {
         const now = Date.now();
@@ -988,7 +988,6 @@
         const lotSize = DOM.lotSize.value;
         const sampleCount = currentSampleData ? currentSampleData.length : 0;
         
-        // Таблиця модифікацій
         let modTableHtml = '';
         if (modGroups && Object.keys(modGroups).length > 0) {
             modTableHtml = '<table class="mod-table" style="width:100%; border-collapse:collapse; margin:16px 0;">';
