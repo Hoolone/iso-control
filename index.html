@@ -723,9 +723,9 @@
         let html = `<table class="history-table"><thead><tr><th>ID</th><th>Акт</th><th>Дата</th><th>Рішення</th><th>n</th><th>C</th><th>M</th><th>m</th><th>Режим</th></tr></thead><tbody>`;
         for (let entry of history.slice(-10).reverse()) {
             const icon = entry.decision === 'accepted' ? '✅' : '❌';
-            html += `<tr><td>${escapeHtml(entry.id)}</td><td>${escapeHtml(entry.lotIdentifier)}</td><td>${new Date(entry.date).toLocaleString('uk-UA')}</td><td>${icon} ${entry.decision === 'accepted' ? 'Прийнято' : 'Відхилено'}</td><td>${entry.n}</td><td>${entry.defectsCritical}</td><td>${entry.defectsMajor}</td><td>${entry.defectsMinor}</td><td>${escapeHtml(entry.mode)}</td></tr>`;
+            html += `<tr><td>${escapeHtml(entry.id)}</td><td>${escapeHtml(entry.lotIdentifier)}</td><td>${new Date(entry.date).toLocaleString('uk-UA')}</td><td>${icon} ${entry.decision === 'accepted' ? 'Прийнято' : 'Відхилено'}</td><td>${entry.n}</td><td>${entry.defectsCritical}</td><td>${entry.defectsMajor}</td><td>${entry.defectsMinor}</td><td>${escapeHtml(entry.mode)}<tr></tr>`;
         }
-        html += '</tbody><tr>';
+        html += '</tbody></table>';
         DOM.historyList.innerHTML = html;
     }
     
@@ -1092,7 +1092,7 @@
         }
     });
     
-    // ----------------------------- 13. АКТ ВІДБОРУ -----------------------------
+    // ----------------------------- 13. АКТ ВІДБОРУ (ВИПРАВЛЕНИЙ: ПІДПИСИ В КІНЦІ, КОРЕКТНА ТАБЛИЦЯ) -----------------------------
     function buildActHTML() {
         const number = DOM.actNumber.value.trim();
         const dateRaw = DOM.actDate.value;
@@ -1136,6 +1136,15 @@
         let decisionLine = '';
         if (decisionDate || decisionNumber) decisionLine = `<p><strong>відповідно до рішення</strong> від ${decisionDate || '________'} № ${decisionNumber || '________'}</p>`;
         
+        const mainTable = `
+        <table style="width:100%; border-collapse:collapse; margin:16px 0;">
+            <tr><th style="width:35%; border:1px solid #cbd5e1; padding:8px; background:#f1f5f9; text-align:left;">Назва ЗВТ: </th><td style="border:1px solid #cbd5e1; padding:8px;">${escapeHtml(deviceName)}</td></tr>
+            <tr><th style="border:1px solid #cbd5e1; padding:8px; background:#f1f5f9; text-align:left;">Тип ЗВТ: </th><td style="border:1px solid #cbd5e1; padding:8px;">${escapeHtml(deviceType)}</td></tr>
+            <tr><th style="border:1px solid #cbd5e1; padding:8px; background:#f1f5f9; text-align:left;">Версія ПЗ: </th><td style="border:1px solid #cbd5e1; padding:8px;">${escapeHtml(modificationField)}</td></tr>
+            <tr><th style="border:1px solid #cbd5e1; padding:8px; background:#f1f5f9; text-align:left;">Розмір партії (шт.): </th><td style="border:1px solid #cbd5e1; padding:8px;">${escapeHtml(lotSize)}</td></tr>
+            <tr><th style="border:1px solid #cbd5e1; padding:8px; background:#f1f5f9; text-align:left;">Кількість відібраних зразків (шт.): </th><td style="border:1px solid #cbd5e1; padding:8px;">${escapeHtml(sampleCount)}</td></tr>
+        </table>`;
+        
         return `<!DOCTYPE html><html lang="uk"><head><meta charset="UTF-8"><title>Акт відбору зразків</title>
     <style>
       body { font-family: 'Segoe UI', system-ui, sans-serif; max-width: 900px; margin: 20px auto; padding: 20px 20px 0 20px; color: #1e293b; line-height: 1.5; }
@@ -1163,13 +1172,7 @@
     <p>відібрано зразки ЗВТ, заявлених для проведення оцінки відповідності вимогам Технічного регламенту законодавчо регульованих засобів вимірювальної техніки, затвердженого постановою Кабінету Міністрів України від 13 січня 2016 р. № 94 (Модуль F)</p>
     ${decisionLine}
     <p><strong>Метод відбору згідно процедури ПР-3.10/33-02.3:</strong> використовуючи Додаток А ДСТУ ISO 24153:2014 (з застосуванням стратифікованого випадкового відбору, якщо партія складається з декількох модифікацій/виконань в межах одного затвердженого типу ЗВТ) та таблиці вибіркового контролю згідно з ДСТУ ISO 2859-1:2014<br>Seed: ${currentSeed ?? '—'}</p>
-    <table>
-        <tr><th>Назва ЗВТ: </th><td>${escapeHtml(deviceName)}</td></tr>
-        <tr><th>Тип ЗВТ: </th><td>${escapeHtml(deviceType)}</td></table>
-        <tr><th>Версія ПЗ: </th><td>${escapeHtml(modificationField)}</td></tr>
-        <tr><th>Розмір партії (шт.): </th><td>${escapeHtml(lotSize)}</td></tr>
-        <tr><th>Кількість відібраних зразків (шт.): </th><td>${escapeHtml(sampleCount)}</td></tr>
-    </table>
+    ${mainTable}
     ${modTableHtml}
     <p>Зразки ідентифіковані, відповідають заявці.</p>
     <p><strong>Випробування будуть проведені на виробничій базі</strong> ${escapeHtml(testLocation)}</p>
@@ -1251,7 +1254,6 @@
         reader.readAsDataURL(file);
     });
     
-    // Експорт/імпорт налаштувань акту
     document.getElementById('exportActSettingsBtn').addEventListener('click', exportActSettings);
     document.getElementById('importActSettingsBtn').addEventListener('click', () => {
         document.getElementById('importActFile').click();
