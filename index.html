@@ -4,9 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
     <title>Формування вибірки з партії – ISO 2859-1 PRO</title>
-    <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://unpkg.com/html5-qrcode"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js">
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js">
+    </script>
+    <script src="https://unpkg.com/html5-qrcode">
+    </script>
     <style>
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; background: #f5f7fb; margin: 0; padding: 16px; color: #1e293b; }
@@ -128,7 +131,7 @@
         </div>
         <button id="verifyBtn" class="secondary" style="margin-top:16px;">✅ Перевірити вибірку</button>
         <div id="verifyResult" class="result-box" style="margin-top:16px;"></div>
-        
+
         <div class="format-settings">
             <h4>⚙️ Налаштування сканування QR-коду</h4>
             <div class="format-row">
@@ -340,12 +343,12 @@
         "2.5":  { E:{n1:20,n2:20,Ac1:0,Re1:2,Ac2:1,Re2:2}, F:{n1:20,n2:20,Ac1:0,Re1:2,Ac2:1,Re2:2}, G:{n1:32,n2:32,Ac1:1,Re1:3,Ac2:2,Re2:3}, H:{n1:50,n2:50,Ac1:3,Re1:5,Ac2:4,Re2:5}, J:{n1:80,n2:80,Ac1:7,Re1:9,Ac2:8,Re2:9}, K:{n1:125,n2:125,Ac1:10,Re1:12,Ac2:11,Re2:12} },
         "4.0":  { D:{n1:13,n2:13,Ac1:0,Re1:2,Ac2:1,Re2:2}, E:{n1:13,n2:13,Ac1:0,Re1:2,Ac2:1,Re2:2}, F:{n1:20,n2:20,Ac1:1,Re1:3,Ac2:2,Re2:3}, G:{n1:32,n2:32,Ac1:3,Re1:5,Ac2:4,Re2:5}, H:{n1:50,n2:50,Ac1:7,Re1:9,Ac2:8,Re2:9}, J:{n1:80,n2:80,Ac1:10,Re1:12,Ac2:11,Re2:12} }
     };
-    
+
     const ISO_TABLES = {
         single: { normal: SINGLE_NORMAL, tightened: SINGLE_TIGHT, reduced: SINGLE_REDUCED },
         double: { normal: DOUBLE_NORMAL, tightened: DOUBLE_TIGHT, reduced: DOUBLE_REDUCED }
     };
-    
+
     const CODE_TABLE = [
         [2, 8, 'A'], [9, 15, 'B'], [16, 25, 'C'], [26, 50, 'D'], [51, 90, 'E'], [91, 150, 'F'],
         [151, 280, 'G'], [281, 500, 'H'], [501, 1200, 'J'], [1201, 3200, 'K'], [3201, 10000, 'L'],
@@ -364,7 +367,7 @@
             return m;
         });
     }
-    
+
     function showToast(msg) {
         const t = document.createElement('div');
         t.className = 'toast';
@@ -372,7 +375,7 @@
         document.body.appendChild(t);
         setTimeout(() => t.remove(), 2500);
     }
-    
+
     function renderSampleTable(rows, headers) {
         DOM.sampleBody.innerHTML = '';
         const table = document.createElement('table');
@@ -398,7 +401,7 @@
         table.appendChild(tbody);
         DOM.sampleBody.appendChild(table);
     }
-    
+
     // Перевірка унікальності серійних номерів
     function checkUniqueSerialNumbers(headers, dataRows) {
         const serialIndex = findSerialColumnIndex(headers);
@@ -422,14 +425,14 @@
         }
         return { isUnique: true, duplicates: [], message: "Усі серійні номери унікальні" };
     }
-    
+
     function getCodeLetter(N, level = 'II') {
         let base = 'Q';
         for (let [low, high, code] of CODE_TABLE) if (N >= low && N <= high) { base = code; break; }
         let idx = CODE_ORDER.indexOf(base) + LEVEL_SHIFT[level];
         return CODE_ORDER[Math.max(0, Math.min(idx, CODE_ORDER.length - 1))];
     }
-    
+
     function findPlanInTable(table, desiredCode) {
         if (table[desiredCode]) return { code: desiredCode, plan: table[desiredCode], arrow: false };
         let idx = CODE_ORDER.indexOf(desiredCode);
@@ -437,7 +440,7 @@
         for (let i = idx - 1; i >= 0; i--) if (table[CODE_ORDER[i]]) return { code: CODE_ORDER[i], plan: table[CODE_ORDER[i]], arrow: true };
         return null;
     }
-    
+
     function getSamplingPlan(N, AQL, level = 'II', mode = 'normal', planType = 'single') {
         const code = getCodeLetter(N, level);
         const table = ISO_TABLES[planType][mode];
@@ -452,7 +455,7 @@
                      n1: p.n1, n2: p.n2, ac1: p.Ac1, re1: p.Re1, ac2: p.Ac2, re2: p.Re2, aql: AQL };
         }
     }
-    
+
     function seededRandom(seed) { 
         let s = seed % 2147483647; 
         if (s <= 0) s += 2147483646; 
@@ -461,7 +464,7 @@
             return (s - 1) / 2147483646; 
         }; 
     }
-    
+
     function fisherYates(arr, seed) { 
         const rng = seededRandom(seed); 
         let a = [...arr]; 
@@ -471,7 +474,7 @@
         } 
         return a; 
     }
-    
+
     function getSampleIndices(dataRows, sampleSize, seed, modColIndex) {
         if (modColIndex !== -1 && dataRows.length) {
             const groups = {};
@@ -499,24 +502,24 @@
         }
         return fisherYates([...Array(dataRows.length).keys()], seed).slice(0, sampleSize);
     }
-    
+
     function csvEscape(cell) { 
         const s = String(cell); 
         return (s.includes(',') || s.includes('"') || s.includes('\n')) ? `"${s.replace(/"/g, '""')}"` : s; 
     }
-    
+
     function findSerialColumnIndex(headers) {
         const keywords = ['серій', 'serial', 'заводський', 'номер', 's/n'];
         for (let i = 0; i < headers.length; i++) if (keywords.some(kw => headers[i].toLowerCase().includes(kw))) return i;
         return -1;
     }
-    
+
     function findModificationColumnIndex(headers) {
         const keywords = ['модиф', 'виконання', 'модифікація', 'версія', 'mod', 'струм'];
         for (let i = 0; i < headers.length; i++) if (keywords.some(kw => headers[i].toLowerCase().includes(kw))) return i;
         return -1;
     }
-    
+
     function getFileName(suffix) {
         const id = DOM.lotIdentifier.value.trim() || 'Lot';
         const prefix = id.replace(/[^a-zA-Z0-9а-яА-ЯіІїЇєЄ_\- ]/g, '_').substring(0, 50);
@@ -524,24 +527,24 @@
         const n = currentPlans ? (currentPlans.major.n || currentPlans.major.n1) : 'n';
         return `${prefix}_N${N}_n${n}_seed${currentSeed}${suffix}`;
     }
-    
+
     function downloadBlob(content, filename, mime) {
         const blob = new Blob([content], { type: mime });
         const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = filename; a.click(); URL.revokeObjectURL(a.href);
     }
-    
+
     function prepareExportData(sorted) {
         if (!currentSampleData) return null;
         return sorted ? [...currentSampleData].sort((a, b) => String(a[0]).localeCompare(String(b[0]))) : currentSampleData;
     }
-    
+
     function exportToCSV(sorted) {
         const dataToExport = prepareExportData(sorted);
         if (!dataToExport) return;
         const csv = currentHeaders.join(',') + '\n' + dataToExport.map(r => r.map(csvEscape).join(',')).join('\n');
         downloadBlob(csv, getFileName(sorted ? '_sorted.csv' : '_random.csv'), 'text/csv');
     }
-    
+
     function exportToExcel(sorted) {
         const dataToExport = prepareExportData(sorted);
         if (!dataToExport) return;
@@ -549,7 +552,7 @@
         XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([currentHeaders, ...dataToExport]), "Вибірка");
         XLSX.writeFile(wb, getFileName(sorted ? '_sorted.xlsx' : '_random.xlsx'));
     }
-    
+
     // ----------------------------- 4. НАЛАШТУВАННЯ ОБРІЗКИ ДЛЯ СКАНЕРА -----------------------------
     function loadTrimSettings() {
         try {
@@ -585,7 +588,7 @@
         const trimmed = applyTrim(raw);
         DOM.testTrimResult.innerHTML = `Оригінал: "${escapeHtml(raw)}"<br>Після обрізки: "${escapeHtml(trimmed)}"`;
     }
-    
+
     // ----------------------------- 5. ЕКСПОРТ/ІМПОРТ НАЛАШТУВАНЬ АКТУ -----------------------------
     function exportActSettings() {
         const settings = {
@@ -612,7 +615,7 @@
         downloadBlob(jsonStr, 'act_settings.json', 'application/json');
         showToast('Налаштування експортовано');
     }
-    
+
     function importActSettings(file) {
         const reader = new FileReader();
         reader.onload = function(e) {
@@ -649,7 +652,7 @@
         };
         reader.readAsText(file);
     }
-    
+
     // ----------------------------- 6. ГЛОБАЛЬНІ ЗМІННІ -----------------------------
     let history = [];
     let currentMode = 'normal';
@@ -658,7 +661,7 @@
     let precomputedSecondIndices = null;
     let modGroups = null, actLogoDataUrl = null;
     let lastGenerationParams = null;
-    
+
     // ----------------------------- 7. ІСТОРІЯ -----------------------------
     function loadHistory() {
         try {
@@ -667,13 +670,13 @@
         } catch (e) { console.warn('Не вдалося завантажити історію'); }
         recalcModeFromHistory();
     }
-    
+
     function saveHistory() {
         try {
             localStorage.setItem('iso2859v2_history', JSON.stringify(history.slice(-50)));
         } catch (e) { showToast('Помилка збереження історії'); }
     }
-    
+
     function recalcModeFromHistory() {
         if (history.length === 0) { currentMode = 'normal'; return; }
         const decisions = history.map(e => e.decision);
@@ -691,13 +694,13 @@
             currentMode = 'normal';
         }
     }
-    
+
     function updateModeDisplay() {
         const names = { normal: 'нормальний', tightened: 'посилений', reduced: 'послаблений' };
         DOM.modeDisplay.textContent = `Режим: ${names[currentMode]}`;
         DOM.modeDisplay.style.background = currentMode === 'normal' ? '#d1fae5' : currentMode === 'tightened' ? '#fee2e2' : '#dbeafe';
     }
-    
+
     function addToHistory(plan, dC, dM, dMi, decision, planType) {
         history.push({
             id: Date.now().toString(36),
@@ -717,7 +720,7 @@
         updateModeDisplay();
         renderHistory();
     }
-    
+
     function renderHistory() {
         if (!history.length) { DOM.historyList.innerHTML = '<p style="color:#64748b; text-align:center; padding:20px 0;">Історія порожня</p>'; return; }
         let html = `<table class="history-table"><thead><tr><th>ID</th><th>Акт</th><th>Дата</th><th>Рішення</th><th>n</th><th>C</th><th>M</th><th>m</th><th>Режим</th></tr></thead><tbody>`;
@@ -728,7 +731,7 @@
         html += '</tbody></table>';
         DOM.historyList.innerHTML = html;
     }
-    
+
     function updatePlanPreview() {
         const N = parseInt(DOM.lotSize.value);
         const level = DOM.inspectionLevel.value;
@@ -754,7 +757,7 @@
         if (currentPlans) warning = '<br><span style="color:#f59e0b;">⚠️ Параметри змінено. Для оновлення вибірки натисніть «Сформувати вибірку».</span>';
         DOM.planDetails.innerHTML = planStr + warning;
     }
-    
+
     // ----------------------------- 8. ЗАВАНТАЖЕННЯ ФАЙЛУ ПАРТІЇ -----------------------------
     document.getElementById('csvFile').addEventListener('change', (e) => {
         const file = e.target.files[0];
@@ -771,7 +774,7 @@
                 currentHeaders = json[0].map(h => String(h).trim());
                 allDataRows = json.slice(1).filter(row => row.some(cell => cell !== ""));
                 DOM.lotSize.value = allDataRows.length;
-                
+
                 const uniqueCheck = checkUniqueSerialNumbers(currentHeaders, allDataRows);
                 if (!uniqueCheck.isUnique) {
                     DOM.autoNote.innerHTML = `⚠️ Увага! ${uniqueCheck.message}<br>Рекомендується виправити дублікати перед формуванням вибірки.`;
@@ -780,7 +783,7 @@
                     DOM.autoNote.innerHTML = `✅ Автоматично визначено: <strong>${allDataRows.length}</strong> одиниць. ${uniqueCheck.message}`;
                     DOM.autoNote.style.color = '#64748b';
                 }
-                
+
                 currentSampleData = null;
                 DOM.sampleBody.innerHTML = '';
                 DOM.verifyResult.innerHTML = '';
@@ -792,12 +795,12 @@
         };
         reader.readAsArrayBuffer(file);
     });
-    
+
     document.getElementById('verifyCsvFile').addEventListener('change', (e) => {
         const file = e.target.files[0];
         DOM.verifyFileNameDisplay.textContent = file ? file.name : 'Файл не вибрано';
     });
-    
+
     // ----------------------------- 9. ВЕРИФІКАЦІЯ -----------------------------
     function reproduceExactSample(params) {
         if (!params) return null;
@@ -809,7 +812,7 @@
         const indices = getSampleIndices(allDataRowsSaved, sampleSize, seed, modColIndex);
         return indices.map(i => allDataRowsSaved[i]);
     }
-    
+
     async function verifySample() {
         if (!lastGenerationParams) {
             DOM.verifyResult.innerHTML = '❌ Спочатку сформуйте вибірку (кнопка "Сформувати вибірку").';
@@ -833,13 +836,13 @@
             if (json.length < 2) { DOM.verifyResult.innerHTML = '❌ Файл вибірки порожній.'; return; }
             const uploadedHeaders = json[0].map(h => String(h).trim());
             const uploadedRows = json.slice(1).filter(row => row.some(cell => cell !== ""));
-            
+
             const uniqueCheck = checkUniqueSerialNumbers(uploadedHeaders, uploadedRows);
             let uniquenessMsg = '';
             if (!uniqueCheck.isUnique) {
                 uniquenessMsg = `<div class="warning">⚠️ Попередження: ${uniqueCheck.message}</div>`;
             }
-            
+
             const reproduced = reproduceExactSample(lastGenerationParams);
             if (!reproduced) { DOM.verifyResult.innerHTML = '❌ Не вдалося відтворити вибірку (помилка логіки).'; return; }
             const canonical = row => row.map(cell => String(cell).trim()).join('\x01');
@@ -870,7 +873,7 @@
             DOM.verifyResult.innerHTML = `❌ Помилка обробки файлу: ${err.message}`;
         }
     }
-    
+
     // ----------------------------- 10. СКАНЕР З ОБРІЗКОЮ ТА ТАЙМАУТОМ -----------------------------
     let html5QrcodeScanner = null;
     let lastScanTime = 0;
@@ -883,7 +886,7 @@
             return;
         }
         lastScanTime = now;
-        
+
         const trimmed = applyTrim(decodedText);
         if (trimmed === '') {
             showToast(`Помилка: після обрізки рядок порожній (оригінал: "${decodedText}")`);
@@ -905,7 +908,7 @@
             DOM.verifyResult.innerHTML = `<div style="color:#ef4444; font-weight:700;">❌ Одиниця не входить у вибірку: ${escapeHtml(trimmed)}</div>` + DOM.verifyResult.innerHTML;
         }
     }
-    
+
     document.getElementById('startScannerBtn').addEventListener('click', () => {
         document.getElementById('scanner-container').style.display = 'block';
         document.getElementById('startScannerBtn').classList.add('hidden');
@@ -922,7 +925,7 @@
             });
         }
     });
-    
+
     // ----------------------------- 11. ГЕНЕРАЦІЯ ВИБІРКИ -----------------------------
     async function generateSample() {
         const N = parseInt(DOM.lotSize.value);
@@ -943,7 +946,7 @@
         const planMi = getSamplingPlan(N, aqlMi, level, currentMode, planType);
         if (!planC || !planM || !planMi) { alert('Не вдалося визначити план вибірки.'); return; }
         currentPlans = { critical: planC, major: planM, minor: planMi };
-        
+
         let dataRows = [], headers = [];
         if (allDataRows.length && currentHeaders.length) {
             dataRows = allDataRows;
@@ -959,19 +962,46 @@
         const modCol = findModificationColumnIndex(headers);
         const sampleSize = planType === 'single' ? planM.n : planM.n1;
         if (dataRows.length < sampleSize) { alert(`Недостатньо даних. Потрібно мінімум ${sampleSize}, є ${dataRows.length}`); return; }
-        
-        const firstIndices = getSampleIndices(dataRows, sampleSize, currentSeed, modCol);
-        currentSampleData = firstIndices.map(i => dataRows[i]);
-        
+
+        // Виправлення 4: перевірка унікальності серійних номерів у вибірці
+        let firstIndices = getSampleIndices(dataRows, sampleSize, currentSeed, modCol);
+        let selectedRows = firstIndices.map(i => dataRows[i]);
+        if (serialCol !== -1) {
+            const serialSet = new Set();
+            const duplicateIndices = [];
+            selectedRows.forEach((row, idx) => {
+                const s = (row[serialCol] || '').trim();
+                if (!s) return;
+                if (serialSet.has(s)) duplicateIndices.push(idx);
+                else serialSet.add(s);
+            });
+            if (duplicateIndices.length > 0) {
+                // спроба замінити дублікати іншими рядками
+                const usedIndices = new Set(firstIndices);
+                const available = dataRows.map((_, i) => i).filter(i => !usedIndices.has(i));
+                const shuffledAvail = fisherYates(available, currentSeed + 9999);
+                let replaced = 0;
+                for (let dupIdx of duplicateIndices) {
+                    if (replaced < shuffledAvail.length) {
+                        firstIndices[firstIndices.indexOf(firstIndices[dupIdx])] = shuffledAvail[replaced];
+                        replaced++;
+                    }
+                }
+                selectedRows = firstIndices.map(i => dataRows[i]);
+                showToast('Увага: виявлено дублікати серійних номерів у вибірці. Їх замінено на інші одиниці.');
+            }
+        }
+        currentSampleData = selectedRows;
+
         if (serialCol !== -1) {
             const sampleSerials = currentSampleData.map(row => row[serialCol]?.toString().trim()).filter(s => s);
             const uniqueSerials = new Set(sampleSerials);
             if (uniqueSerials.size !== sampleSerials.length) {
-                console.warn('Увага: у згенерованій вибірці є дублікати серійних номерів!');
+                console.warn('Увага: у згенерованій вибірці все ще є дублікати серійних номерів!');
                 showToast('⚠️ Увага: вибірка містить дублікати серійних номерів!');
             }
         }
-        
+
         precomputedSecondIndices = null;
         if (planType === 'double') {
             const secondSize = planM.n2;
@@ -979,7 +1009,7 @@
             const shuffledRemaining = fisherYates([...remaining], currentSeed + 10007);
             precomputedSecondIndices = shuffledRemaining.slice(0, secondSize);
         }
-        
+
         modGroups = {};
         currentSampleData.forEach(row => {
             const serial = row[serialCol] || '';
@@ -987,12 +1017,12 @@
             if (!modGroups[mod]) modGroups[mod] = [];
             modGroups[mod].push(serial);
         });
-        
+
         lastGenerationParams = {
             N, aqlMajor: aqlM, level, mode: currentMode, planType, seed: currentSeed,
             allDataRowsSaved: dataRows, modColIndex: modCol
         };
-        
+
         let planStr = planType === 'single' ?
             `n = <strong>${planM.n}</strong> (код ${planM.originalCode}${planM.arrow ? ' → ' + planM.code : ''})<br>Critical: Ac/Re = ${planC.ac}/${planC.re}<br>Major: Ac/Re = ${planM.ac}/${planM.re}<br>Minor: Ac/Re = ${planMi.ac}/${planMi.re}` :
             `n₁ = <strong>${planM.n1}</strong>, n₂ = <strong>${planM.n2}</strong> (код ${planM.originalCode}${planM.arrow ? ' → ' + planM.code : ''})<br>Critical: Ac₁/Re₁ = ${planC.ac1}/${planC.re1}, Ac₂/Re₂ = ${planC.ac2}/${planC.re2}<br>Major: Ac₁/Re₁ = ${planM.ac1}/${planM.re1}, Ac₂/Re₂ = ${planM.ac2}/${planM.re2}<br>Minor: Ac₁/Re₁ = ${planMi.ac1}/${planMi.re1}, Ac₂/Re₂ = ${planMi.ac2}/${planMi.re2}`;
@@ -1007,7 +1037,7 @@
         document.getElementById('verifyCard').classList.remove('hidden');
         document.getElementById('decisionCard').classList.remove('hidden');
     }
-    
+
     // ----------------------------- 12. АНАЛІЗ ДЕФЕКТІВ -----------------------------
     document.getElementById('analyzeBtn').addEventListener('click', () => {
         if (!currentPlans) return alert('Спочатку сформуйте вибірку');
@@ -1015,6 +1045,8 @@
         const dC = parseInt(DOM.defectsCritical.value) || 0;
         const dM = parseInt(DOM.defectsMajor.value) || 0;
         const dMi = parseInt(DOM.defectsMinor.value) || 0;
+
+        // Виправлення 1: коректна обробка double без дублювання
         if (planType === 'double' && !secondSampleGenerated) {
             const needSecond = (dC > currentPlans.critical.ac1 && dC < currentPlans.critical.re1) ||
                 (dM > currentPlans.major.ac1 && dM < currentPlans.major.re1) ||
@@ -1026,16 +1058,15 @@
                 }
                 DOM.stage2Inputs.style.display = 'block';
                 DOM.decisionResult.innerHTML = '<strong>⚠️ Потрібна друга вибірка.</strong> Вкажіть дефекти у другій вибірці та натисніть "Аналізувати" знову.';
-                if (allDataRows.length > 0) {
-                    const secondSample = precomputedSecondIndices.map(i => allDataRows[i]);
-                    currentSampleData = [...currentSampleData, ...secondSample];
-                    renderSampleTable(currentSampleData, currentHeaders);
-                    DOM.sampleHeader.textContent = `Перша + друга вибірка (n₁=${currentPlans.major.n1}, n₂=${currentPlans.major.n2})`;
-                }
+                // показуємо другу вибірку окремо, не змінюючи currentSampleData
+                const secondSampleRows = precomputedSecondIndices.map(i => allDataRows[i]);
+                renderSampleTable(secondSampleRows, currentHeaders);
+                DOM.sampleHeader.textContent = `Друга вибірка (n₂ = ${currentPlans.major.n2})`;
                 secondSampleGenerated = true;
                 return;
             }
         }
+
         let isRejected = false, reasons = [];
         if (planType === 'single') {
             if (dC >= currentPlans.critical.re) { isRejected = true; reasons.push(`Критичні: ${dC} ≥ Re=${currentPlans.critical.re}`); }
@@ -1050,7 +1081,7 @@
             else if (totC >= currentPlans.critical.re2) { isRejected = true; reasons.push(`Критичні (сумарно): ${totC} ≥ Re₂=${currentPlans.critical.re2}`); }
             else if (totC <= currentPlans.critical.ac2) { /* прийнято */ }
             else { reasons.push(`Критичні (сумарно): ${totC} між Ac₂=${currentPlans.critical.ac2} та Re₂=${currentPlans.critical.re2} – відхилено`); isRejected = true; }
-            
+
             if (!isRejected) {
                 if (dM >= currentPlans.major.re1) { isRejected = true; reasons.push(`Значні (перша вибірка): ${dM} ≥ Re₁=${currentPlans.major.re1}`); }
                 else if (totM >= currentPlans.major.re2) { isRejected = true; reasons.push(`Значні (сумарно): ${totM} ≥ Re₂=${currentPlans.major.re2}`); }
@@ -1073,7 +1104,7 @@
                 <button id="rejectLotBtn" class="danger">❌ Відхилити партію</button></div>`;
         }
     });
-    
+
     document.getElementById('decisionResult').addEventListener('click', function(e) {
         if (!e.target.matches('button')) return;
         const btn = e.target;
@@ -1091,7 +1122,7 @@
             DOM.decisionResult.innerHTML = '<strong style="color:#ef4444;">❌ Партію відхилено.</strong>';
         }
     });
-    
+
     // ----------------------------- 13. АКТ ВІДБОРУ (ВИПРАВЛЕНИЙ: ПІДПИСИ В КІНЦІ, КОРЕКТНА ТАБЛИЦЯ) -----------------------------
     function buildActHTML() {
         const number = DOM.actNumber.value.trim();
@@ -1114,7 +1145,7 @@
         const testLocation = DOM.actTestLocation.value.trim();
         const lotSize = DOM.lotSize.value;
         const sampleCount = currentSampleData ? currentSampleData.length : 0;
-        
+
         let modTableHtml = '';
         if (modGroups && Object.keys(modGroups).length > 0) {
             modTableHtml = '<table class="mod-table" style="width:100%; border-collapse:collapse; margin:16px 0;">';
@@ -1128,14 +1159,14 @@
             const allSerials = currentSampleData?.map(row => row[serialCol] || '').filter(s => s).join(', ') || '';
             modTableHtml = `<p><strong>Заводські номери:</strong> ${escapeHtml(allSerials)}</p>`;
         }
-        
+
         let leftHeaderHtml = '';
         if (actLogoDataUrl) leftHeaderHtml += `<div><img src="${actLogoDataUrl}" style="max-height:70px; margin-bottom:4px;"></div>`;
         leftHeaderHtml += `<div class="logo">UA.TR.001</div>`;
-        
+
         let decisionLine = '';
         if (decisionDate || decisionNumber) decisionLine = `<p><strong>відповідно до рішення</strong> від ${decisionDate || '________'} № ${decisionNumber || '________'}</p>`;
-        
+
         const mainTable = `
         <table style="width:100%; border-collapse:collapse; margin:16px 0;">
             <tr><th style="width:35%; border:1px solid #cbd5e1; padding:8px; background:#f1f5f9; text-align:left;">Назва ЗВТ: </th><td style="border:1px solid #cbd5e1; padding:8px;">${escapeHtml(deviceName)}</td></tr>
@@ -1144,7 +1175,7 @@
             <tr><th style="border:1px solid #cbd5e1; padding:8px; background:#f1f5f9; text-align:left;">Розмір партії (шт.): </th><td style="border:1px solid #cbd5e1; padding:8px;">${escapeHtml(lotSize)}</td></tr>
             <tr><th style="border:1px solid #cbd5e1; padding:8px; background:#f1f5f9; text-align:left;">Кількість відібраних зразків (шт.): </th><td style="border:1px solid #cbd5e1; padding:8px;">${escapeHtml(sampleCount)}</td></tr>
         </table>`;
-        
+
         return `<!DOCTYPE html><html lang="uk"><head><meta charset="UTF-8"><title>Акт відбору зразків</title>
     <style>
       body { font-family: 'Segoe UI', system-ui, sans-serif; max-width: 900px; margin: 20px auto; padding: 20px 20px 0 20px; color: #1e293b; line-height: 1.5; }
@@ -1183,14 +1214,14 @@
     </div>
     </body></html>`;
     }
-    
+
     document.getElementById('generateActBtn').addEventListener('click', () => {
         if (!currentSampleData || !currentPlans) return alert('Спочатку сформуйте вибірку.');
         const win = window.open('', '_blank', 'width=900,height=700');
         win.document.write(buildActHTML());
         win.document.close();
     });
-    
+
     document.getElementById('pdfBtn').addEventListener('click', () => {
         if (history.length === 0) return alert('Немає записів для звіту');
         const last = history[history.length - 1];
@@ -1207,25 +1238,25 @@
         doc.text(`Decision: ${last.decision.toUpperCase()}`, 20, 78);
         doc.save(`inspection_${last.id}.pdf`);
     });
-    
+
     function fillActDefaults() { 
         const today = new Date().toISOString().slice(0,10);
         DOM.actDate.value = today;
         DOM.decisionDate.value = today;
     }
-    
+
     (function setDefaultSeed() {
         const now = new Date();
         DOM.seed.value = `${String(now.getDate()).padStart(2,'0')}${String(now.getMonth()+1).padStart(2,'0')}${now.getFullYear()}${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}`;
     })();
-    
+
     fillActDefaults();
     loadHistory();
     loadTrimSettings();
     updateModeDisplay();
     renderHistory();
     updatePlanPreview();
-    
+
     // ----------------------------- 14. ПІДПИСКИ НА ПОДІЇ -----------------------------
     document.getElementById('generateBtn').addEventListener('click', generateSample);
     document.getElementById('copySeedBtn').addEventListener('click', () => {
@@ -1233,19 +1264,51 @@
         document.execCommand('copy');
         showToast('Seed скопійовано');
     });
-    
+
+    // Виправлення 2: скидання currentPlans при зміні параметрів
     const autoUpdateFields = ['lotSize', 'inspectionLevel', 'planType', 'aqlCritical', 'aqlMajor', 'aqlMinor'];
     autoUpdateFields.forEach(id => {
         const el = document.getElementById(id);
-        if (el) el.addEventListener('change', updatePlanPreview);
+        if (el) {
+            el.addEventListener('change', () => {
+                currentPlans = null;
+                secondSampleGenerated = false;
+                updatePlanPreview();
+            });
+        }
     });
-    
+
+    // Виправлення 5: синхронізація lotSize з файловими даними
+    DOM.lotSize.addEventListener('change', function() {
+        if (allDataRows.length > 0) {
+            const newN = parseInt(this.value);
+            if (!isNaN(newN) && newN !== allDataRows.length) {
+                if (confirm(`Ви змінили обсяг партії на ${newN}. Це очистить завантажені дані файлу. Продовжити?`)) {
+                    allDataRows = [];
+                    currentHeaders = [];
+                    currentSampleData = null;
+                    DOM.sampleBody.innerHTML = '';
+                    DOM.fileNameDisplay.textContent = 'Файл не вибрано';
+                    DOM.autoNote.innerHTML = 'Після вибору файлу обсяг партії визначиться автоматично';
+                    DOM.autoNote.style.color = '#64748b';
+                    document.getElementById('csvFile').value = '';
+                    document.getElementById('planCard').classList.add('hidden');
+                    document.getElementById('verifyCard').classList.add('hidden');
+                    document.getElementById('decisionCard').classList.add('hidden');
+                    updatePlanPreview();
+                } else {
+                    this.value = allDataRows.length;
+                }
+            }
+        }
+    });
+
     document.getElementById('verifyBtn').addEventListener('click', verifySample);
     document.getElementById('downloadCsvRandomBtn').addEventListener('click', () => exportToCSV(false));
     document.getElementById('downloadCsvSortedBtn').addEventListener('click', () => exportToCSV(true));
     document.getElementById('downloadExcelRandomBtn').addEventListener('click', () => exportToExcel(false));
     document.getElementById('downloadExcelSortedBtn').addEventListener('click', () => exportToExcel(true));
-    
+
     document.getElementById('actLogo').addEventListener('change', function(e) {
         const file = e.target.files[0];
         if (!file) { actLogoDataUrl = null; DOM.actLogoPreview.innerHTML = ''; return; }
@@ -1253,7 +1316,7 @@
         reader.onload = ev => { actLogoDataUrl = ev.target.result; DOM.actLogoPreview.innerHTML = `<img src="${ev.target.result}" style="max-height:60px;">`; };
         reader.readAsDataURL(file);
     });
-    
+
     document.getElementById('exportActSettingsBtn').addEventListener('click', exportActSettings);
     document.getElementById('importActSettingsBtn').addEventListener('click', () => {
         document.getElementById('importActFile').click();
@@ -1264,7 +1327,7 @@
             e.target.value = '';
         }
     });
-    
+
     document.getElementById('clearFormBtn').addEventListener('click', () => {
         DOM.lotIdentifier.value = '25/3/F/41/';
         DOM.lotSize.value = '500';
@@ -1302,14 +1365,14 @@
         fillActDefaults();
         updatePlanPreview();
     });
-    
+
     document.getElementById('clearHistoryBtn').addEventListener('click', () => {
         if (confirm('Очистити всю історію?')) { history = []; saveHistory(); currentMode = 'normal'; updateModeDisplay(); renderHistory(); }
     });
-    
+
     document.getElementById('testTrimBtn').addEventListener('click', testTrim);
     document.getElementById('saveTrimBtn').addEventListener('click', saveTrimSettings);
-    
+
     // ----------------------------- 15. PWA (проста реєстрація) -----------------------------
     function setupPWA() {
         const manifest = {
