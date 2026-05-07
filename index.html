@@ -1160,7 +1160,7 @@
         let modTableHtml = '';
         if (modGroups && Object.keys(modGroups).length > 0) {
             modTableHtml = '<table class="mod-table" style="width:100%; border-collapse:collapse; margin:16px 0;">';
-            modTableHtml += '<thead><tr style="background:#f1f5f9;"><th style="border:1px solid #cbd5e1; padding:8px;">Модифікація</th><th style="border:1px solid #cbd5e1; padding:8px;">Заводські номери</th><th style="border:1px solid #cbd5e1; padding:8px; width:15%;">Кількість</th></tr></thead><tbody>';
+            modTableHtml += '<thead><tr style="background:#f1f5f9;"><th style="border:1px solid #cbd5e1; padding:8px; width:15%;">Модифікація</th><th style="border:1px solid #cbd5e1; padding:8px;  width:80%;">Заводські номери</th><th style="border:1px solid #cbd5e1; padding:8px; width:5%;">Кількість</th></tr></thead><tbody>';
             for (let [mod, serials] of Object.entries(modGroups)) {
                 modTableHtml += `<tr><td style="border:1px solid #cbd5e1; padding:8px;">${escapeHtml(mod)}</td><td style="border:1px solid #cbd5e1; padding:8px;">${escapeHtml(serials.join(', '))}</td><td style="border:1px solid #cbd5e1; padding:8px; text-align:center;">${serials.length}</td></tr>`;
             }
